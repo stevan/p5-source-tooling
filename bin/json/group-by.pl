@@ -16,7 +16,7 @@ sub main {
         'verbose' => \$DEBUG
     );
 
-    ($key) || die 'Must provide a key to collate on';
+    ($key) || die 'Must provide a key to group-by';
 
     my $input = join '' => <STDIN>;
     my $json  = JSON::XS->new->utf8->pretty->canonical;
