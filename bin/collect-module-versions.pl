@@ -6,26 +6,35 @@ use warnings;
 use Path::Class  ();
 use JSON::XS     ();
 use Getopt::Long ();
+use Data::Dumper ();
 use PPI;
 
 our $DEBUG = 0;
+our $ROOT;
 
 sub main {
 
-    my ($root, $exclude);
+    my ($exclude, $include);
     Getopt::Long::GetOptions(
-        'root=s'    => \$root,
+        'root=s'    => \$ROOT,
         'exclude=s' => \$exclude,
+        'include=s' => \$include,
         'verbose'   => \$DEBUG,
     );
 
-    (-e $root && -d $root)
+    (-e $ROOT && -d $ROOT)
         || die 'You must specifiy a valid root directory';
+
+    $ROOT = Path::Class::Dir->new( $ROOT );
+
+    (defined $include && defined $exclude)
+        && die 'You can not have both include and exclude patterns';
 
     my @modules;
     visit(
-        Path::Class::Dir->new( $root ), (
-            exclude => $exclude,
+        $ROOT, (
+            ($exclude ? (exclude => $exclude) : ()),
+            ($include ? (include => $include) : ()),
             visitor => \&extract_module_version_information,
             acc     => \@modules,
         )
@@ -43,13 +52,27 @@ sub visit {
     my ($e, %args) = @_;
 
     if ( -f $e ) {
-        $args{visitor}->( $e, $args{acc} );
+        $args{visitor}->( $e, $args{acc} )
+            if $e->basename =~ /\.p[ml]/i;
     }
     else {
+        warn "Got e($e) and ROOT($ROOT)" if $DEBUG;
+
+        my @children = $e->children( no_hidden => 1 );
+        warn "ROOT: GOT children: " . Data::Dumper::Dumper([ map $_->relative( $ROOT )->stringify, @children ]) if $DEBUG;
+
         if ( my $exclude = $args{exclude} ) {
-            return if $e->basename =~ /$exclude/;
+            warn "ROOT: Looking to exclude '$exclude' ... got: " . $e->basename if $DEBUG;
+            @children = grep $_->relative( $ROOT )->stringify !~ /$exclude/, @children;
         }
-        map visit( $_, %args ), $e->children( no_hidden => 1 );
+
+        if ( my $include = $args{include} ) {
+            warn "ROOT: Looking to include '$include' ... got: " . $e->basename if $DEBUG;
+            @children = grep $_->relative( $ROOT )->stringify =~ /$include/, @children;
+        }
+
+        warn "ROOT: Getting ready to run with children: " . Data::Dumper::Dumper([ map $_->relative( $ROOT )->stringify, @children ]) if $DEBUG;
+        map visit( $_, %args ), @children;
     }
 
     return;
@@ -61,6 +84,9 @@ sub extract_module_version_information {
     warn "Looking at '$e'" if $DEBUG;
 
     my $doc = PPI::Document->new( $e->stringify );
+
+    (defined $doc)
+        || die 'Could not load document: ' . $e->stringify;
 
     my $current;
     $doc->find(sub {
@@ -121,7 +147,7 @@ sub extract_module_version_information {
             # we've found it!!!!
             push @$acc => {
                 namespace => $current,
-                path      => $e->stringify,
+                path      => $e->relative( $ROOT )->stringify,
                 version   => $version,
             };
 
