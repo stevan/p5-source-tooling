@@ -5,6 +5,7 @@ use warnings;
 
 use Plack;
 use Plack::Request;
+use Plack::MIME;
 use Plack::Builder;
 
 use Path::Class ();
@@ -62,10 +63,13 @@ builder {
         return [ 400, [], [ 'The path specified is a directory (' . $path->stringify . ")\n" ]]
             if -d $path;
 
+        my $file = Path::Class::File->new( $path );
+        my $mime = Plack::MIME->mime_type( $file->basename );
+
         return [
             200,
-            [ 'Content-Type' => 'text/plain' ],
-            [ Path::Class::File->new( $path )->slurp ]
+            [ 'Content-Type' => $mime ],
+            [ $file->slurp ]
         ];
     };
 
