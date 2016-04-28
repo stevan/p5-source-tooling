@@ -14,6 +14,8 @@ use JSON::XS    ();
 use Perl::Critic;
 use Git::Repository;
 
+use code::tooling::git;
+
 $ENV{CHECKOUT}       ||= '.';
 $ENV{CRITIC_PROFILE} ||= './perlcritic.ini';
 
@@ -22,6 +24,8 @@ my $JSON     = JSON::XS->new->utf8->pretty->canonical;
 my $GIT_REPO = Git::Repository->new( work_tree => $CHECKOUT );
 
 builder {
+
+    #enable 'CrossOrigin', origins => '*';
 
     mount '/fs/' => sub {
         my $r    = Plack::Request->new( $_[0] );
@@ -217,64 +221,16 @@ builder {
             return [ 400, [], [ "The <git log> command is not allowed without a valid file path (no directories)\n" ]]
                 if -d $path;
 
-            my $query = $r->query_parameters;
-
-            my $cmd = $GIT_REPO->command(
-                log => (
-                    '--date=iso',
-                    '--format=format:' . (
-                        join '%n' => (
-                            '%H',  # commit hash
-                            '%an', # author name
-                            '%ae', # author email
-                            '%ad', # author date respecting --date
-                            '%B',  # body
-                            '%H',  # close
-                        )
-                    ),
-                    # Support a few of the query limiting options
-                    ($query->{max_count} ? ('--max-count=' . $query->{max_count}) : ()),
-                    ($query->{skip}      ? ('--skip='      . $query->{skip}     ) : ()),
-                    ($query->{since}     ? ('--since='     . $query->{since}    ) : ()),
-                    ($query->{after}     ? ('--after='     . $query->{after}    ) : ()),
-                    ($query->{until}     ? ('--until='     . $query->{until}    ) : ()),
-                    ($query->{before}    ? ('--before='    . $query->{before}   ) : ()),
-                    ($query->{author}    ? ('--author='    . $query->{author}   ) : ()),
-                    ($query->{commiter}  ? ('--commiter='  . $query->{commiter} ) : ()),
-                ) => $path
+            my $commits = code::tooling::git::log(
+                $GIT_REPO,
+                $path,
+                $r->query_parameters
             );
-            warn '[' . (join ' ' => $cmd->cmdline) . ']';
-            my @all = $cmd->final_output;
-
-            #return [ 200, [], [ join "\n" => @all ]];
-
-            my @commits;
-            while ( @all ) {
-                my $sha          = shift @all;
-                my $author_name  = shift @all;
-                my $author_email = shift @all;
-                my $author_date  = shift @all;
-                # now collect the message
-                my @body;
-                push @body => shift @all
-                    while @all && $all[0] ne $sha;
-                shift @all; # discard the closing commit line
-
-                utf8::decode($author_name);
-
-                # and push onto commits
-                push @commits => {
-                    sha     => $sha,
-                    author  => { name => $author_name, email => $author_email },
-                    date    => ($author_date . ''),
-                    message => (join "\n" => @body),
-                };
-            }
 
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [ $JSON->encode( \@commits ) ]
+                [ $JSON->encode( $commits ) ]
             ];
         };
 
