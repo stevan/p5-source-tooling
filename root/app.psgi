@@ -32,18 +32,26 @@ builder {
 
         my $body;
         if ( -d $path ) {
-            my @children = map { $_->basename } $path->children( no_hidden => 1 );
+            my @children = map +{
+                path   => $_->basename,
+                is_dir => (-d $_ ? 1 : 0)
+            }, $path->children( no_hidden => 1 );
+
             if ( my $filter = $r->param('filter') ) {
-                @children = grep /$filter/, @children;
+                @children = grep $_->{path} =~ /$filter/, @children;
             }
 
             $body = {
                 path     => $path->relative( $CHECKOUT )->stringify,
+                is_dir   => 1,
                 children => \@children
             };
         }
         else {
-            $body = { path => $path->relative( $CHECKOUT )->stringify };
+            $body = {
+                path   => $path->relative( $CHECKOUT )->stringify,
+                is_dir => 0,
+            };
         }
 
         return [
