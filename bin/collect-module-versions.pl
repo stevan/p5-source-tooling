@@ -145,18 +145,20 @@ sub extract_module_version_information {
             warn "Found version '$version' in '$current' in '$e'" if $DEBUG;
 
             # we've found it!!!!
-            push @$acc => {
-                namespace => $current,
-                path      => $e->relative( $ROOT )->stringify,
-                version   => $version,
-            };
+            $current->{path}    = $e->relative( $ROOT )->stringify;
+            $current->{version} = $version;
+
+            push @$acc => $current;
 
             undef $current;
         }
         else {
             # otherwise wait for next package ...
             return 0 unless $node->isa('PPI::Statement::Package');
-            $current = $node->namespace;
+            $current = {
+                namespace => $node->namespace,
+                line_num  => $node->line_number,
+            };
 
             warn "Found package '$current' in '$e'" if $DEBUG;
         }
