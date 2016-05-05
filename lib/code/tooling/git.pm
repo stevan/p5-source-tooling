@@ -1,4 +1,4 @@
-package code::tooling::git;
+package Code::Tooling::Git;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Git::Repository;
 sub new {
     my ($class, %args) = @_;
     return bless {
-        repo => Git::Repostory->new( %args )
+        repo => Git::Repository->new( %args )
     } => $class;
 }
 

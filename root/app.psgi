@@ -152,15 +152,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [
-                    $JSON->encode(
-                        code::tooling::git::blame(
-                            $GIT_REPO,
-                            $path,
-                            $r->query_parameters
-                        )
-                    )
-                ]
+                [ $JSON->encode( $GIT_REPO->blame( $path, $r->query_parameters ) ) ]
             ];
         };
 
@@ -177,15 +169,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [
-                    $JSON->encode(
-                        code::tooling::git::log(
-                            $GIT_REPO,
-                            $path,
-                            $r->query_parameters
-                        )
-                    )
-                ]
+                [ $JSON->encode( $GIT_REPO->log( $path, $r->query_parameters ) ) ]
             ];
         };
 
@@ -199,15 +183,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [
-                    $JSON->encode(
-                        code::tooling::git::show(
-                            $GIT_REPO,
-                            $sha,
-                            $r->query_parameters
-                        )
-                    )
-                ]
+                [ $JSON->encode( $GIT_REPO->show( $sha, $r->query_parameters ) ) ]
             ];
         };
 
