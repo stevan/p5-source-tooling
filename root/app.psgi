@@ -12,16 +12,15 @@ use Path::Class ();
 use JSON::XS    ();
 
 use Perl::Critic;
-use Git::Repository;
 
-use code::tooling::git;
+use Code::Tooling::Git;
 
 $ENV{CHECKOUT}       ||= '.';
 $ENV{CRITIC_PROFILE} ||= './perlcritic.ini';
 
 my $CHECKOUT = Path::Class::Dir->new( $ENV{CHECKOUT} );
 my $JSON     = JSON::XS->new->utf8->pretty->canonical;
-my $GIT_REPO = Git::Repository->new( work_tree => $CHECKOUT );
+my $GIT_REPO = Code::Tooling::Git->new( work_tree => $CHECKOUT );
 
 builder {
 
@@ -140,7 +139,6 @@ builder {
     };
 
     mount '/git/' => builder {
-
         mount '/blame/' => sub {
             my $r    = Plack::Request->new( $_[0] );
             my $path = $CHECKOUT->subdir( $r->path );

@@ -3,10 +3,21 @@ package code::tooling::git;
 use strict;
 use warnings;
 
-sub show {
-    my ($repo, $sha, $query) = @_;
+use Git::Repository;
 
-    my $cmd = $repo->command(
+sub new {
+    my ($class, %args) = @_;
+    return bless {
+        repo => Git::Repostory->new( %args )
+    } => $class;
+}
+
+# ...
+
+sub show {
+    my ($self, $sha, $query) = @_;
+
+    my $cmd = $self->{repo}->command(
         show => (
             '--date=iso',
             '--format=format:' . (
@@ -75,14 +86,14 @@ sub show {
 }
 
 sub blame {
-    my ($repo, $path, $query) = @_;
+    my ($self, $path, $query) = @_;
 
     my $line_range;
     if ( $query->{start} || $query->{end} ) {
          $line_range = join ',' => (($query->{start} || 1), ($query->{end} || ()));
     }
 
-    my $cmd = $repo->command(
+    my $cmd = $self->{repo}->command(
         blame => (
             '-l',  # use the long version of the SHAs
             ($line_range ? ('-L ' . $line_range) : ()),
@@ -132,9 +143,9 @@ sub blame {
 }
 
 sub log {
-    my ($repo, $path, $query) = @_;
+    my ($self, $path, $query) = @_;
 
-    my $cmd = $repo->command(
+    my $cmd = $self->{repo}->command(
         log => (
             '--date=iso',
             '--format=format:' . (
