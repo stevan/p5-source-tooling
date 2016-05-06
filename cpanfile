@@ -3,6 +3,7 @@
 requires 'Getopt::Long'    => 0;
 requires 'Path::Class'     => 0;
 requires 'JSON::XS'        => 0;
+requires 'Data::Dumper'    => 0;
 
 # Web
 requires 'Plack'           => 0;
