@@ -28,7 +28,7 @@ sub main {
     my @output;
     foreach my $datum ( @$data ) {
         (exists $datum->{$key})
-            || die "Could not find key($key) in data(" . $json->encode( $datum ) . ")";
+            || die "Could not find key($key) in data(" . encode( $datum ) . ")";
 
         push @output => $datum->{$key};
     }
