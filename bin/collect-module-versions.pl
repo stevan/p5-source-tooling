@@ -145,10 +145,7 @@ sub extract_module_version_information {
             warn "Found version '$version' in '$current' in '$e'" if $DEBUG;
 
             # we've found it!!!!
-            $current->{path}    = $e->relative( $ROOT )->stringify;
-            $current->{version} = $version;
-
-            push @$acc => $current;
+            $acc->[-1]->{version} = $version;
 
             undef $current;
         }
@@ -158,7 +155,10 @@ sub extract_module_version_information {
             $current = {
                 namespace => $node->namespace,
                 line_num  => $node->line_number,
+                path      => $e->relative( $ROOT )->stringify,
             };
+
+            push @$acc => $current;
 
             warn "Found package '$current' in '$e'" if $DEBUG;
         }
