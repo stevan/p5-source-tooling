@@ -100,7 +100,7 @@ builder {
                 [ 'Content-Type' => 'application/json' ],
                 [ $JSON->encode( $PERL->critique( $path, $r->query_parameters ) ) ]
             ];
-        }
+        };
     };
 
     mount '/git/' => builder {
