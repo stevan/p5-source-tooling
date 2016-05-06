@@ -6,11 +6,11 @@ use warnings;
 use lib 'lib';
 
 use Path::Class  ();
-use JSON::XS     ();
 use Getopt::Long ();
 use Data::Dumper ();
 
 use Code::Tooling::Git;
+use Code::Tooling::Util::JSON qw[ encode ];
 
 our $DEBUG = 0;
 
@@ -37,7 +37,7 @@ sub main {
         }
     );
 
-    print JSON::XS->new->utf8->pretty->canonical->encode( $log );
+    print encode( $log );
 }
 
 main && exit;

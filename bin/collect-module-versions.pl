@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Path::Class  ();
-use JSON::XS     ();
 use Getopt::Long ();
 use Data::Dumper ();
 use PPI;
+
+use Code::Tooling::Util::JSON qw[ encode ];
 
 our $DEBUG = 0;
 our $ROOT;
@@ -40,8 +41,7 @@ sub main {
         )
     );
 
-    my $json = JSON::XS->new->utf8->pretty->canonical;
-    print $json->encode( \@modules );
+    print encode( \@modules );
 }
 
 main && exit;

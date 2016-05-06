@@ -3,9 +3,10 @@
 use strict;
 use warnings;
 
-use JSON::XS     ();
 use Getopt::Long ();
 use Data::Dumper ();
+
+use Code::Tooling::Util::JSON qw[ decode encode ];
 
 use MetaCPAN::Client;
 
@@ -19,9 +20,7 @@ sub main {
     );
 
     my $input = join '' => <STDIN>;
-    my $json  = JSON::XS->new->utf8->pretty->canonical;
-
-    my $data = $json->decode( $input );
+    my $data  = decode( $input );
 
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
@@ -43,7 +42,7 @@ sub main {
 
     warn Data::Dumper::Dumper( \@info ) if $DEBUG;
 
-    print $json->encode( \@info );
+    print encode( \@info );
 }
 
 main && exit;

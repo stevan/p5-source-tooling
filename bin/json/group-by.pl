@@ -3,8 +3,9 @@
 use strict;
 use warnings;
 
-use JSON::XS     ();
 use Getopt::Long ();
+
+use Code::Tooling::Util::JSON qw[ decode encode ];
 
 our $DEBUG = 0;
 
@@ -19,9 +20,7 @@ sub main {
     ($key) || die 'Must provide a key to group-by';
 
     my $input = join '' => <STDIN>;
-    my $json  = JSON::XS->new->utf8->pretty->canonical;
-
-    my $data = $json->decode( $input );
+    my $data  = decode( $input );
 
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
@@ -29,13 +28,13 @@ sub main {
     my %output;
     foreach my $datum ( @$data ) {
         (exists $datum->{$key})
-            || die "Could not find key($key) in data(" . $json->encode( $datum ) . ")";
+            || die "Could not find key($key) in data(" . encode( $datum ) . ")";
 
         $output{ $datum->{$key} } = [] unless $output{ $datum->{$key} };
         push @{ $output{ $datum->{$key} } } => $datum;
     }
 
-    print $json->encode( \%output );
+    print encode( \%output );
 }
 
 main && exit;

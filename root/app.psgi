@@ -8,16 +8,15 @@ use Plack::Request;
 use Plack::Builder;
 
 use Path::Class ();
-use JSON::XS    ();
 
 use Code::Tooling::Perl;
 use Code::Tooling::Git;
+use Code::Tooling::Util::JSON qw[ encode ];
 
 $ENV{CHECKOUT}       ||= '.';
 $ENV{CRITIC_PROFILE} ||= './config/perlcritic.ini';
 
 my $CHECKOUT = Path::Class::Dir->new( $ENV{CHECKOUT} );
-my $JSON     = JSON::XS->new->utf8->pretty->canonical;
 my $GIT      = Code::Tooling::Git->new( work_tree => $CHECKOUT );
 my $PERL     = Code::Tooling::Perl->new( perlcritic_profile => $ENV{CRITIC_PROFILE} );
 
@@ -59,7 +58,7 @@ builder {
         return [
             200,
             [ 'Content-Type' => 'application/json' ],
-            [ $JSON->encode( $body ) ]
+            [ encode( $body ) ]
         ];
     };
 
@@ -94,7 +93,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [ $JSON->encode( $PERL->critique( $path, $r->query_parameters ) ) ]
+                [ encode( $PERL->critique( $path, $r->query_parameters ) ) ]
             ];
         };
     };
@@ -113,7 +112,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [ $JSON->encode( $GIT->blame( $path, $r->query_parameters ) ) ]
+                [ encode( $GIT->blame( $path, $r->query_parameters ) ) ]
             ];
         };
 
@@ -130,7 +129,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [ $JSON->encode( $GIT->log( $path, $r->query_parameters ) ) ]
+                [ encode( $GIT->log( $path, $r->query_parameters ) ) ]
             ];
         };
 
@@ -144,7 +143,7 @@ builder {
             return [
                 200,
                 [ 'Content-Type' => 'application/json' ],
-                [ $JSON->encode( $GIT->show( $sha, $r->query_parameters ) ) ]
+                [ encode( $GIT->show( $sha, $r->query_parameters ) ) ]
             ];
         };
 
