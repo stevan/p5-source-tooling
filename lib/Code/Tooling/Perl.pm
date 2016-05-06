@@ -5,6 +5,9 @@ use warnings;
 
 use Perl::Critic;
 
+our $VERSION   = '0.01';
+our $AUTHORITY = 'cpan:STEVAN';
+
 sub new {
     my ($class, %args) = @_;
     return bless { %args } => $class;
