@@ -10,9 +10,7 @@ use JSON::XS     ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Git::Repository;
-
-use code::tooling::git;
+use Code::Tooling::Git;
 
 our $DEBUG = 0;
 
@@ -35,8 +33,9 @@ sub main {
     $checkout = Path::Class::Dir->new( $checkout );
     $path     = $checkout->file( $path );
 
-    my $blame = code::tooling::git::blame(
-        Git::Repository->new( work_tree => $checkout ),
+    my $blame = Code::Tooling::Git->new(
+        work_tree => $checkout
+    )->blame(
         $path,
         {
             start => $start,

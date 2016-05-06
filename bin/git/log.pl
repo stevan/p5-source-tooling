@@ -10,19 +10,31 @@ use JSON::XS     ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Git::Repository;
-
-use code::tooling::git;
+use Code::Tooling::Git;
 
 our $DEBUG = 0;
 
 sub main {
 
-    my ($checkout, $path);
+    my (
+        $checkout, $path,
+        $max_count, $skip,
+        $since, $after, $until, $before,
+        $author, $commiter,
+    );
+
     Getopt::Long::GetOptions(
-        'checkout=s' => \$checkout,
-        'path=s'     => \$path,
-        'verbose'    => \$DEBUG,
+        'checkout=s'  => \$checkout,
+        'path=s'      => \$path,
+        'verbose'     => \$DEBUG,
+        'max_count=i' => \$max_count,
+        'skip=i'      => \$skip,
+        'since=s'     => \$since,
+        'after=s'     => \$after,
+        'until=s'     => \$until,
+        'before=s'    => \$before,
+        'author=s'    => \$author,
+        'commiter=s'  => \$commiter,
     );
 
     $checkout ||= $ENV{CHECKOUT} ||= '.';;
@@ -33,11 +45,20 @@ sub main {
     $checkout = Path::Class::Dir->new( $checkout );
     $path     = $checkout->file( $path );
 
-    my $log = code::tooling::git::log(
-        Git::Repository->new( work_tree => $checkout ),
+    my $log = Code::Tooling::Git->new(
+        work_tree => $checkout
+    )->log(
         $path,
         {
-            debug => $DEBUG
+            debug     => $DEBUG,
+            max_count => $max_count,
+            skip      => $skip,
+            since     => $since,
+            after     => $after,
+            until     => $until,
+            before    => $before,
+            author    => $author,
+            commiter  => $commiter,
         }
     );
 

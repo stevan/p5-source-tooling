@@ -10,9 +10,7 @@ use JSON::XS     ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Git::Repository;
-
-use code::tooling::git;
+use Code::Tooling::Git;
 
 our $DEBUG = 0;
 
@@ -30,8 +28,9 @@ sub main {
     (-e $checkout && -d $checkout)
         || die 'You must specifiy a valid checkout directory';
 
-    my $log = code::tooling::git::show(
-        Git::Repository->new( work_tree => $checkout ),
+    my $log = Code::Tooling::Git->new(
+        work_tree => $checkout
+    )->show(
         $sha,
         {
             debug => $DEBUG
