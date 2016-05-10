@@ -98,7 +98,6 @@ sub check_module_versions_against_metacpan {
                         version_numified
                         author
                         date
-                        stat
                         release
                         distribution
                     ]
