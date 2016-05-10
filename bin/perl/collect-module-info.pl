@@ -43,6 +43,7 @@ sub main {
     #     path      : Str,       # path of the file package was in
     #     meta      : {          # ... module meta-data
     #         version : VString  # value of $VERSION
+    #         cpan    : HashRef  # data from MetaCPAN
     #     }
     # }
 
@@ -59,7 +60,7 @@ sub main {
     );
 
     # Step 2. - Query MetaCPAN to find the module and see how
-    #           much our version number differs
+    #           much our version number differs.
 
     my $mcpan = MetaCPAN::Client->new;
 
@@ -71,6 +72,11 @@ sub main {
 
     # Step 3. - Query MetaCPAN to get the module's source and
     #           see how much it differs from our source
+
+    # Step 4. - Query MetaCPAN to get the module author's information,
+    #           source repository and bug tracker information
+
+    # Step 5. - Prepare (machine readable) report of status of modules
 
     print encode( \@modules );
 }
