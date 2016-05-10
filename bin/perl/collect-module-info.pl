@@ -6,7 +6,9 @@ use warnings;
 use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
+
 use PPI;
+use MetaCPAN::Client;
 
 use Code::Tooling::Util::JSON qw[ encode ];
 
@@ -32,14 +34,43 @@ sub main {
         && die 'You can not have both include and exclude patterns';
 
     my @modules;
-    visit(
+
+    # The data structure within @modules is
+    # as follows:
+    # {
+    #     namespace : String,    # name of the package
+    #     line_num  : Int,       # line number package began at
+    #     path      : Str,       # path of the file package was in
+    #     meta      : {          # ... module meta-data
+    #         version : VString  # value of $VERSION
+    #     }
+    # }
+
+    # Step 1. - Traverse the file system and collect info about
+    #           modules and their version numbers
+
+    traverse_filesystem(
         $ROOT, (
             ($exclude ? (exclude => $exclude) : ()),
             ($include ? (include => $include) : ()),
             visitor => \&extract_module_version_information,
-            acc     => \@modules,
+            modules => \@modules,
         )
     );
+
+    # Step 2. - Query MetaCPAN to find the module and see how
+    #           much our version number differs
+
+    my $mcpan = MetaCPAN::Client->new;
+
+    check_module_versions_against_metacpan(
+        $mcpan, (
+            modules => \@modules
+        )
+    );
+
+    # Step 3. - Query MetaCPAN to get the module's source and
+    #           see how much it differs from our source
 
     print encode( \@modules );
 }
@@ -48,11 +79,39 @@ main && exit;
 
 # subs ....
 
-sub visit {
+sub check_module_versions_against_metacpan {
+    my ($mcpan, %args) = @_;
+
+    foreach my $module ( @{ $args{modules} } ) {
+        warn "Going to fetch data about $module->{namespace}" if $DEBUG;
+        eval {
+            my $meta_data = $mcpan->module(
+                $module->{namespace}, {
+                    fields => join ',' => qw[
+                        version
+                        version_numified
+                        author
+                        date
+                        stat
+                        release
+                        distribution
+                    ]
+                }
+            );
+            $module->{meta}->{cpan} = $meta_data->{data};
+            warn "Succesfully fetch data about $module->{namespace}" if $DEBUG;
+            1;
+        } or do {
+            warn "Unable to fetch data about $module->{namespace} because $@" if $DEBUG;
+        };
+    }
+}
+
+sub traverse_filesystem {
     my ($e, %args) = @_;
 
     if ( -f $e ) {
-        $args{visitor}->( $e, $args{acc} )
+        $args{visitor}->( $e, $args{modules} )
             if $e->basename =~ /\.p[ml]/i;
     }
     else {
@@ -72,14 +131,14 @@ sub visit {
         }
 
         warn "ROOT: Getting ready to run with children: " . Data::Dumper::Dumper([ map $_->relative( $ROOT )->stringify, @children ]) if $DEBUG;
-        map visit( $_, %args ), @children;
+        map traverse_filesystem( $_, %args ), @children;
     }
 
     return;
 }
 
 sub extract_module_version_information {
-    my ($e, $acc) = @_;
+    my ($e, $modules) = @_;
 
     warn "Looking at '$e'" if $DEBUG;
 
@@ -123,7 +182,7 @@ sub extract_module_version_information {
                 $o->sprevious_sibling           and return '';
             }
 
-            warn "Found possible version in '$current' in '$e'" if $DEBUG;
+            warn "Found possible version in '$current->{namespace}' in '$e'" if $DEBUG;
 
             my $version;
             if ( $node->isa('PPI::Token::Quote') ) {
@@ -142,10 +201,10 @@ sub extract_module_version_information {
                 die 'Unsupported object ' . ref($node);
             }
 
-            warn "Found version '$version' in '$current' in '$e'" if $DEBUG;
+            warn "Found version '$version' in '$current->{namespace}' in '$e'" if $DEBUG;
 
             # we've found it!!!!
-            $acc->[-1]->{version} = $version;
+            $modules->[-1]->{meta}->{version} = $version;
 
             undef $current;
         }
@@ -155,12 +214,13 @@ sub extract_module_version_information {
             $current = {
                 namespace => $node->namespace,
                 line_num  => $node->line_number,
-                path      => $e->relative( $ROOT )->stringify,
+                path      => $e->stringify,
+                meta      => {},
             };
 
-            push @$acc => $current;
+            push @$modules => $current;
 
-            warn "Found package '$current' in '$e'" if $DEBUG;
+            warn "Found package '$current->{namespace}' in '$e'" if $DEBUG;
         }
 
         return;
