@@ -11,9 +11,10 @@ our $DEBUG = 0;
 
 sub main {
 
-    my ($key);
+    my ($key, $sort);
     Getopt::Long::GetOptions(
         'key=s'   => \$key,
+        'sort'    => \$sort,
         'verbose' => \$DEBUG
     );
 
@@ -32,6 +33,8 @@ sub main {
 
         push @output => $datum->{$key};
     }
+
+    @output = sort @output if $sort;
 
     print encode( \@output );
 }
