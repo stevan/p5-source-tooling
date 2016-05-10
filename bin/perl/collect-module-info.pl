@@ -17,11 +17,14 @@ our $ROOT;
 
 sub main {
 
-    my ($exclude, $include);
+    my ($exclude, $include, $offline);
     Getopt::Long::GetOptions(
         'root=s'    => \$ROOT,
+        # filters
         'exclude=s' => \$exclude,
         'include=s' => \$include,
+        # development
+        'offline'   => \$offline,
         'verbose'   => \$DEBUG,
     );
 
@@ -59,22 +62,25 @@ sub main {
         )
     );
 
-    # Step 2. - Query MetaCPAN to find the module and see how
-    #           much our version number differs.
 
-    my $mcpan = MetaCPAN::Client->new;
+    if ( not $offline ) {
+        # Step 2. - Query MetaCPAN to find the module and see how
+        #           much our version number differs.
 
-    check_module_versions_against_metacpan(
-        $mcpan, (
-            modules => \@modules
-        )
-    );
+        my $mcpan = MetaCPAN::Client->new;
 
-    # Step 3. - Query MetaCPAN to get the module's source and
-    #           see how much it differs from our source
+        check_module_versions_against_metacpan(
+            $mcpan, (
+                modules => \@modules
+            )
+        );
 
-    # Step 4. - Query MetaCPAN to get the module author's information,
-    #           source repository and bug tracker information
+        # Step 3. - Query MetaCPAN to get the module's source and
+        #           see how much it differs from our source
+
+        # Step 4. - Query MetaCPAN to get the module author's information,
+        #           source repository and bug tracker information
+    }
 
     # Step 5. - Prepare (machine readable) report of status of modules
 
