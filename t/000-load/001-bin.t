@@ -14,7 +14,6 @@ is(system('perl', '-c', $_), 0, '... loaded ' . $_ . ' okay') foreach qw[
     bin/json/group-by.pl
 
     bin/perl/collect-module-info.pl
-    bin/perl/fetch-module-info.pl
 ];
 
 done_testing;
