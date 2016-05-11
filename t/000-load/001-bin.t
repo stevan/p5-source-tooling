@@ -12,6 +12,7 @@ is(system('perl', '-c', $_), 0, '... loaded ' . $_ . ' okay') foreach qw[
 
     bin/json/extract-key.pl
     bin/json/group-by.pl
+    bin/json/prune.pl
 
     bin/perl/collect-module-info.pl
 ];
