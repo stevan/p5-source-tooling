@@ -228,6 +228,7 @@ sub extract_module_version_information {
                 namespace => $node->namespace,
                 line_num  => $node->line_number,
                 path      => $e->stringify,
+                rel_path  => $e->relative( $ROOT->parent )->stringify,
                 meta      => {},
             };
 
