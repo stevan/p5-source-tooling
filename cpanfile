@@ -2,8 +2,11 @@
 # Core
 requires 'Getopt::Long'    => 0;
 requires 'Path::Class'     => 0;
-requires 'JSON::XS'        => 0;
 requires 'Data::Dumper'    => 0;
+
+# Core-ish
+requires 'JSON::XS'        => 0;
+requires 'List::Util'      => 1.45;
 
 # Web
 requires 'Plack'           => 0;
