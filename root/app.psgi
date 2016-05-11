@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use lib 'lib';
+
 use Plack;
 use Plack::Request;
 use Plack::Builder;

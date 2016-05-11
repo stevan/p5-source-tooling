@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use lib 'lib';
+
 use Getopt::Long ();
 
 use Code::Tooling::Util::JSON qw[ decode encode ];

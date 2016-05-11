@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use lib 'lib';
+
 use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
