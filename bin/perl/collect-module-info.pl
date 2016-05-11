@@ -11,8 +11,12 @@ use Data::Dumper ();
 
 use PPI;
 use MetaCPAN::Client;
-
+use Code::Tooling::Git;
 use Code::Tooling::Util::JSON qw[ encode ];
+
+use File::Compare;
+use File::Fetch;
+use LWP::Simple;
 
 our $DEBUG = 0;
 our $ROOT;
@@ -64,9 +68,16 @@ sub main {
         )
     );
 
+    # Step 2. - check if the file has been modified
+    #           locally by git log
+    check_file_changes_locally(
+       $ROOT, (
+           modules => \@modules
+       )
+    );
 
     if ( not $offline ) {
-        # Step 2. - Query MetaCPAN to find the module and see how
+        # Step 3. - Query MetaCPAN to find the module and see how
         #           much our version number differs.
 
         my $mcpan = MetaCPAN::Client->new;
@@ -77,14 +88,19 @@ sub main {
             )
         );
 
-        # Step 3. - Query MetaCPAN to get the module's source and
+        # Step 4. - Query MetaCPAN to get the module's source and
         #           see how much it differs from our source
+        check_file_changes_remotely(
+            $ROOT, (
+                modules => \@modules
+            )
+        );
 
-        # Step 4. - Query MetaCPAN to get the module author's information,
+        # Step 5. - Query MetaCPAN to get the module author's information,
         #           source repository and bug tracker information
     }
 
-    # Step 5. - Prepare (machine readable) report of status of modules
+    # Step 6. - Prepare (machine readable) report of status of modules
 
     print encode( \@modules );
 }
@@ -92,6 +108,60 @@ sub main {
 main && exit;
 
 # subs ....
+sub check_file_changes_remotely {
+    my ($checkout, %args) = @_;
+
+    foreach my $module ( @{ $args{modules} } ) {
+        #check if this file has been modified in repote repo
+        warn "Going to compared files about $module->{namespace}" if $DEBUG;
+        #next if $module->{is_file_changed_locally};
+
+        if($module->{meta}->{cpan}->{author} &&
+           $module->{meta}->{cpan}->{release} &&
+           $module->{rel_path}) {
+            #check if files differ
+            warn "Going to fetch data about $module->{namespace}" if $DEBUG;
+            eval {
+                my $remote_file_path = 'https://api.metacpan.org/source/{author}/{release}/{path-to-file}';
+                $remote_file_path=~s/{author}/$module->{meta}->{cpan}->{author}/g;
+                $remote_file_path=~s/{release}/$module->{meta}->{cpan}->{release}/g;
+                $remote_file_path=~s/{path-to-file}/$module->{rel_path}/g;
+
+                #run the function to differentiate between two files.
+                $module->{diff} = 1;
+                warn "Succesfully compared files about $module->{namespace}" if $DEBUG;
+                1;
+            } or do {
+                warn "Unable to compared files about $module->{namespace} because $@" if $DEBUG;
+            };
+        }
+    }
+}
+
+sub check_file_changes_locally {
+    my ($checkout, %args) = @_;
+
+    foreach my $module ( @{ $args{modules} } ) {
+        #check if this file has been modified in local repo
+        warn "Going to check git log about $module->{namespace}" if $DEBUG;
+        eval {
+            my $logs = Code::Tooling::Git->new(
+                work_tree => $checkout
+            )->log(
+                $module->{rel_path},
+                {
+                    debug     => $DEBUG,
+                    max_count => 2,
+                }
+            );
+            $module->{is_file_changed_locally} = ( (@$logs) > 1 )? 1 : 0;
+            warn "Succesfully checked git log about $module->{namespace}" if $DEBUG;
+            1;
+        } or do {
+            warn "Unable to check git log about $module->{namespace} because $@" if $DEBUG;
+        };
+    }
+}
 
 sub check_module_versions_against_metacpan {
     my ($mcpan, %args) = @_;
