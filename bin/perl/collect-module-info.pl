@@ -15,8 +15,6 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use JSON::XS qw(encode_json decode_json);
-
 use PPI;
 use MetaCPAN::Client;
 use Code::Tooling::Git;
@@ -25,11 +23,6 @@ use Code::Tooling::Perl;
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
-
-
-use Text::Diff;
-use Path::Tiny;
-use File::Slurp qw(read_file write_file);
 
 our $DEBUG = 0;
 our $ROOT;
@@ -71,7 +64,6 @@ sub main {
 
     # Step 1. - Traverse the file system and collect info about
     #           modules and their version numbers
-
     traverse_filesystem(
         $ROOT,
         \&extract_module_info,
@@ -81,7 +73,6 @@ sub main {
             ($include ? (include => $include) : ()),
         )
     );
-    print "traversed";
 
     # Step 2. - check if the file has been modified
     #           locally by git log
@@ -106,7 +97,7 @@ sub main {
         # Step 4. - Query MetaCPAN to get the module's source and
         #           see how much it differs from our source
         check_file_changes_remotely(
-            $mcpan,$ROOT, (
+            $mcpan, $ROOT, (
                 modules => \@modules
             )
         );
@@ -121,19 +112,13 @@ sub main {
     }
 
     # Step 6. - Prepare (machine readable) report of status of modules
-    my $json = encode_json \@modules;
-    write_file('report.json', { binmode => ':raw' }, $json);
-
     print encode( \@modules );
 }
 
 main && exit;
 
-
-
 # subs ....
-sub find_authors_information {
-    my ($mcpan, %args) = @_;
+sub find_authors_information ($mcpan, %args) {
 
     foreach my $module ( @{ $args{modules} } ) {
         #check if this file has been modified in remote repo
@@ -152,14 +137,13 @@ sub find_authors_information {
                 warn "Succesfully fetched authors data about $module->{namespace}" if $DEBUG;
                 1;
             } or do {
-                warn "Unable to fetch authors data about $module->{namespace} because $@";
+                warn "Unable to fetch authors data about $module->{namespace} because $@" if $DEBUG;
             };
         }
     }
 }
 
-sub check_file_changes_remotely {
-    my ($mcpan, $checkout, %args) = @_;
+sub check_file_changes_remotely ($mcpan, $checkout, %args) {
 
     foreach my $module ( @{ $args{modules} } ) {
         #check if this file has been modified in remote repo
@@ -169,26 +153,24 @@ sub check_file_changes_remotely {
            $module->{rel_path}) {
             warn "Going to fetch data about $module->{namespace}" if $DEBUG;
             eval {
-                my $remote_file_path = 'https://api.metacpan.org/source/{author}/{release}/{path-to-file}';
-                $remote_file_path=~s/{author}/$module->{meta}->{cpan}->{author}/g;
-                $remote_file_path=~s/{release}/$module->{meta}->{cpan}->{release}/g;
-                $remote_file_path=~s/{path-to-file}/$module->{rel_path}/g;
+                my $remote_file_path = 'https://api.metacpan.org/source/'.$module->{meta}->{cpan}->{author}.
+                                       '/'.$module->{meta}->{cpan}->{release}.
+                                       '/'.$module->{rel_path};
                 my $cpan_module = $mcpan->ua->get( $remote_file_path );
-                my $file = path($module->{path});
+                my $file = Path::Class::File->new( $module->{path} );
                 my $local = $file->slurp;
                 my $remote = $cpan_module->{content};
                 $module->{modules_differ} = $remote eq $local ? 1:0;
                 warn "Succesfully compared files about $module->{namespace}" if $DEBUG;
                 1;
             } or do {
-                warn "Unable to compared files about $module->{namespace} because $@";
+                warn "Unable to compared files about $module->{namespace} because $@" if $DEBUG;
             };
         }
     }
 }
 
-sub check_file_changes_locally {
-    my ($checkout, %args) = @_;
+sub check_file_changes_locally ($checkout, %args) {
 
     foreach my $module ( @{ $args{modules} } ) {
         #check if this file has been modified in local repo
@@ -197,7 +179,7 @@ sub check_file_changes_locally {
             my $logs = Code::Tooling::Git->new(
                 work_tree => $checkout
             )->log(
-                $module->{rel_path},
+                $module->{path},
                 {
                     debug     => $DEBUG,
                 }
@@ -205,13 +187,15 @@ sub check_file_changes_locally {
             my $author_commits = {};
             for my $log( @$logs ) {
                 $author_commits->{  $log->{author}->{name} } //= [];
-                push $author_commits->{ $log->{author}->{name} },$log->{sha};
+                push $author_commits->{ $log->{author}->{name} }->@*,$log->{sha};
             }
+            $module->{first_local_change} = $logs->[0] if @$logs;
+            $module->{last_local_change} = $logs->[-1] if @$logs;
             $module->{authors_changing_locally} = $author_commits;
-            warn "Succesfully checked git log about $module->{namespace}";
+            warn "Succesfully checked git log about $module->{namespace}" if $DEBUG;
             1;
         } or do {
-            warn "Unable to check git log about $module->{namespace} because $@";
+            warn "Unable to check git log about $module->{namespace} because $@" if $DEBUG;
         };
     }
 }
