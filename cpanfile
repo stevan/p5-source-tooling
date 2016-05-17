@@ -1,5 +1,5 @@
 
-use v5.20;
+use v5.22;
 
 # Core
 requires 'experimental'     => 0;
