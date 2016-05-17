@@ -85,11 +85,11 @@ sub main {
 
     # Step 2. - check if the file has been modified
     #           locally by git log
-    #check_file_changes_locally(
-    #   $ROOT, (
-    #       modules => \@modules
-    #   )
-    #);
+    check_file_changes_locally(
+       $ROOT, (
+           modules => \@modules
+       )
+    );
 
     if ( not $offline ) {
         # Step 3. - Query MetaCPAN to find the module and see how
