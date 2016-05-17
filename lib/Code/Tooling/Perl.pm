@@ -1,22 +1,23 @@
 package Code::Tooling::Perl;
 
-use strict;
+use v5.20;
 use warnings;
+use experimental 'signatures';
 
 use Perl::Critic;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
+our $DEBUG     = 0;
 
-sub new {
-    my ($class, %args) = @_;
+sub new ($class, %args) {
     return bless { %args } => $class;
 }
 
 # ...
 
-sub critique {
-    my ($self, $path, $query) = @_;
+
+sub critique ($self, $path, $query) {
 
     my $critic     = Perl::Critic->new( -profile => $self->{perlcritic_profile} );
     my @violations = $critic->critique( $path->stringify );

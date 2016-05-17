@@ -1,23 +1,24 @@
 package Code::Tooling::Util::JSON;
 
-use strict;
+use v5.20;
 use warnings;
+use experimental 'signatures';
 
-use Exporter 'import';
 use JSON::XS;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
+our $DEBUG     = 0;
 
-our @EXPORT = qw[
-    encode
-    decode
+our @EXPORT_OK = qw[
+    &encode
+    &decode
 ];
 
 our $JSON = JSON::XS->new->utf8->pretty->canonical;
 
-sub encode { $JSON->encode( @_ ) }
-sub decode { $JSON->decode( @_ ) }
+sub encode ($data) { $JSON->encode( $data ) }
+sub decode ($json) { $JSON->decode( $json ) }
 
 1;
 
