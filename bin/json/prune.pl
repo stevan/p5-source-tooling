@@ -7,7 +7,7 @@ use lib 'lib';
 
 use Getopt::Long ();
 
-use Code::Tooling::Util::JSON qw[ decode encode ];
+use Importer 'Code::Tooling::Util::JSON' => qw[ decode encode ];
 
 our $DEBUG = 0;
 
