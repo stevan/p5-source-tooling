@@ -18,7 +18,6 @@ sub main {
         print "---------analyzing module",$module->{namespace},"---------","\n";
         if(!keys $module->{meta}->{cpan}) {
             print "holy shit this has no entry in cpan!!!! ","\n";
-
         }
         print "------------------------------------------------------","\n";
     }
