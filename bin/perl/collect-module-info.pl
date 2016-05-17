@@ -13,6 +13,7 @@ use PPI;
 use MetaCPAN::Client;
 
 use Code::Tooling::Util::JSON qw[ encode ];
+use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
 
 our $DEBUG = 0;
 our $ROOT;
@@ -56,11 +57,12 @@ sub main {
     #           modules and their version numbers
 
     traverse_filesystem(
-        $ROOT, (
+        $ROOT,
+        \&extract_module_info,
+        \@modules,
+        (
             ($exclude ? (exclude => $exclude) : ()),
             ($include ? (include => $include) : ()),
-            visitor => \&extract_module_version_information,
-            modules => \@modules,
         )
     );
 
@@ -120,32 +122,6 @@ sub check_module_versions_against_metacpan {
     }
 }
 
-sub traverse_filesystem {
-    my ($e, %args) = @_;
-
-    if ( -f $e ) {
-        $args{visitor}->( $e, $args{modules} )
-            if $e->basename =~ /\.p[ml]/i;
-    }
-    else {
-        warn "Got e($e) and ROOT($ROOT)" if $DEBUG;
-
-        my @children = $e->children( no_hidden => 1 );
-        warn "ROOT: GOT children: " . Data::Dumper::Dumper([ map $_->relative( $ROOT )->stringify, @children ]) if $DEBUG;
-
-        if ( my $exclude = $args{exclude} ) {
-            warn "ROOT: Looking to exclude '$exclude' ... got: " . $e->basename if $DEBUG;
-            @children = grep $_->relative( $ROOT )->stringify !~ /$exclude/, @children;
-        }
-
-        if ( my $include = $args{include} ) {
-            warn "ROOT: Looking to include '$include' ... got: " . $e->basename if $DEBUG;
-            @children = grep $_->relative( $ROOT )->stringify =~ /$include/, @children;
-        }
-
-        warn "ROOT: Getting ready to run with children: " . Data::Dumper::Dumper([ map $_->relative( $ROOT )->stringify, @children ]) if $DEBUG;
-        map traverse_filesystem( $_, %args ), @children;
-    }
 
     return;
 }
