@@ -1,15 +1,16 @@
 package Code::Tooling::Git;
 
-use strict;
+use v5.20;
 use warnings;
+use experimental 'signatures';
 
 use Git::Repository;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
+our $DEBUG     = 0;
 
-sub new {
-    my ($class, %args) = @_;
+sub new ($class, %args) {
     return bless {
         repo => Git::Repository->new( %args )
     } => $class;
@@ -17,8 +18,7 @@ sub new {
 
 # ...
 
-sub show {
-    my ($self, $sha, $query) = @_;
+sub show ($self, $sha, $query) {
 
     my $cmd = $self->{repo}->command(
         show => (

@@ -13,13 +13,24 @@ our $DEBUG = 0;
 
 sub main {
 
-    my ($key);
+    my ($f);
     Getopt::Long::GetOptions(
-        'key=s'   => \$key,
+        'f=s'     => \$f,
         'verbose' => \$DEBUG
     );
 
-    ($key) || die 'Must provide a key to group-by';
+    (defined $f)
+        || die 'You must pass a function to map';
+
+    my $src = (
+        ('$f = sub {')
+        . ('local $_ = $_[0];')
+        . ($f.';')
+      . ('}')
+    );
+
+    (eval $src && ref $f eq 'CODE')
+        || die 'Unable to compile function: ' . $f . ' because: ' . $@;
 
     my $input = join '' => <STDIN>;
     my $data  = decode( $input );
@@ -27,16 +38,12 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my %output;
+    my @output;
     foreach my $datum ( @$data ) {
-        (exists $datum->{$key})
-            || die "Could not find key($key) in data(" . encode( $datum ) . ")";
-
-        $output{ $datum->{$key} } = [] unless $output{ $datum->{$key} };
-        push @{ $output{ $datum->{$key} } } => $datum;
+        push @output => $f->( $datum );
     }
 
-    print encode( \%output );
+    print encode( \@output );
 }
 
 main && exit;

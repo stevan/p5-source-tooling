@@ -10,7 +10,8 @@ use Getopt::Long ();
 use Data::Dumper ();
 
 use Code::Tooling::Git;
-use Code::Tooling::Util::JSON qw[ encode ];
+
+use Importer 'Code::Tooling::Util::JSON' => qw[ encode ];
 
 our $DEBUG = 0;
 
