@@ -5,6 +5,8 @@ use warnings;
 
 use lib 'lib';
 
+use experimental 'say';
+
 use Data::Dumper ();
 use Path::Class  ();
 
@@ -17,7 +19,7 @@ sub main {
     for my $module ( @$modules ) {
         print "---------analyzing module",$module->{namespace},"---------","\n";
         if(!keys $module->{meta}->{cpan}) {
-            print "holy shit this has no entry in cpan!!!! ","\n";
+            say 'No CPAN entry';
         }
         if( defined $module->{meta}->{cpan}
             && defined $module->{meta}->{cpan}->{version_numified}
