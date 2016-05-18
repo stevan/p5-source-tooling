@@ -1,6 +1,6 @@
 #!perl
 
-use strict;
+use v5.22;
 use warnings;
 
 use lib 'lib';

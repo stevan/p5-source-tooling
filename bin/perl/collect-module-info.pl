@@ -1,6 +1,6 @@
 #!perl
 
-use strict;
+use v5.22;
 use warnings;
 
 use lib 'lib';
@@ -132,7 +132,7 @@ sub find_authors_information ($mcpan, %args) {
                     website     => $author->website,
                     blog        => $author->blog,
                     profile     => $author->profile,
-                    website     => $author->website,  
+                    website     => $author->website,
                 };
                 warn "Succesfully fetched authors data about $module->{namespace}" if $DEBUG;
                 1;

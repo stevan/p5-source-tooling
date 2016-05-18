@@ -1,6 +1,6 @@
 package Code::Tooling::Util::FileSystem;
 
-use v5.20;
+use v5.22;
 use warnings;
 use experimental 'signatures', 'current_sub';
 
