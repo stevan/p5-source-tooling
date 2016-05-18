@@ -120,7 +120,7 @@ main && exit;
 # subs ....
 sub find_authors_information ($mcpan, %args) {
 
-    foreach my $module ( @{ $args{modules} } ) {
+    foreach my $module ( $args{modules}->@* ) {
         #check if this file has been modified in remote repo
         warn "Going to compared files about $module->{namespace}" if $DEBUG;
         if($module->{meta}->{cpan}->{author}) {
@@ -145,7 +145,7 @@ sub find_authors_information ($mcpan, %args) {
 
 sub check_file_changes_remotely ($mcpan, $checkout, %args) {
 
-    foreach my $module ( @{ $args{modules} } ) {
+    foreach my $module ( $args{modules}->@* ) {
         #check if this file has been modified in remote repo
         warn "Going to compared files about $module->{namespace}" if $DEBUG;
         if($module->{meta}->{cpan}->{author} &&
@@ -172,7 +172,7 @@ sub check_file_changes_remotely ($mcpan, $checkout, %args) {
 
 sub check_file_changes_locally ($checkout, %args) {
 
-    foreach my $module ( @{ $args{modules} } ) {
+    foreach my $module ( $args{modules}->@* ) {
         #check if this file has been modified in local repo
         warn "Going to check git log about $module->{namespace}" if $DEBUG;
         eval {
@@ -202,7 +202,7 @@ sub check_file_changes_locally ($checkout, %args) {
 
 sub check_module_versions_against_metacpan ($mcpan, %args) {
 
-    foreach my $module ( @{ $args{modules} } ) {
+    foreach my $module ( $args{modules}->@* ) {
         warn "Going to fetch data about $module->{namespace}" if $DEBUG;
         eval {
             my $meta_data = $mcpan->module(
