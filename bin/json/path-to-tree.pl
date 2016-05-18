@@ -48,13 +48,10 @@ sub main {
             }
             else {
                 warn 'No current node, creating one!' if $DEBUG;
-                my $new = {
+                push $current->{children}->@* => $current = {
                     node     => $part,
                     children => []
                 };
-                warn 'Adding new node to old current node' if $DEBUG;
-                push $current->{children}->@* => $new;
-                $current = $new;
             }
         }
 
