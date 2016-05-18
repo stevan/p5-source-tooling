@@ -17,8 +17,8 @@ use Data::Dumper ();
 
 use PPI;
 use MetaCPAN::Client;
+
 use Code::Tooling::Git;
-use Code::Tooling::Util::JSON qw[ encode ];
 use Code::Tooling::Perl;
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode ];
