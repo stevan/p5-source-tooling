@@ -17,7 +17,7 @@ sub main {
     my $content = $file->slurp;
     my $modules = decode($content);
     for my $module ( @$modules ) {
-        print "---------analyzing module",$module->{namespace},"---------","\n";
+        say '---------analyzing module',$module->{namespace},'---------';
         if(!keys $module->{meta}->{cpan}) {
             say 'No CPAN entry';
         }
@@ -25,9 +25,9 @@ sub main {
             && defined $module->{meta}->{cpan}->{version_numified}
             && defined $module->{meta}->{version}) {
             my $version_difference = $module->{meta}->{cpan}->{version_numified} - $module->{meta}->{version};
-            print "versions differ by ",$version_difference,"\n" if($version_difference>0);
+            say 'versions differ by ',$version_difference if($version_difference>0);
         }
-        print "------------------------------------------------------","\n";
+        say '------------------------------------------------------';
     }
 }
 
