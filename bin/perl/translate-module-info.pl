@@ -13,12 +13,14 @@ use Path::Class  ();
 use Importer 'Code::Tooling::Util::JSON' => qw[ decode ];
 
 sub main {
-    my $file = Path::Class::File->new( 'report.json' );
-    my $content = $file->slurp;
+    my $content = '';
+    for my $line ( <STDIN> ) {
+        $content .= $line;
+    }
     my $modules = decode($content);
     for my $module ( @$modules ) {
         say '---------analyzing module',$module->{namespace},'---------';
-        if(!keys $module->{meta}->{cpan}) {
+        if(!keys %{$module->{meta}->{cpan}}) {
             say 'No CPAN entry';
         }
         if( defined $module->{meta}->{cpan}
