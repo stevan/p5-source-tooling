@@ -8,8 +8,7 @@ use lib 'lib';
 use Data::Dumper ();
 use Path::Class  ();
 
-use Code::Tooling::Util::JSON qw[ decode ];
-use Importer 'Code::Tooling::Util::JSON'       => qw[ decode ];
+use Importer 'Code::Tooling::Util::JSON' => qw[ decode ];
 
 sub main {
     my $file = Path::Class::File->new( 'report.json' );
