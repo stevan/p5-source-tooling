@@ -181,7 +181,7 @@ sub check_file_changes_locally ($checkout, %args) {
             )->log(
                 $module->{path},
                 {
-                    debug     => $DEBUG,
+                    debug => $DEBUG,
                 }
             );
             my $author_commits = {};
