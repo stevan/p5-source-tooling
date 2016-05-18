@@ -5,7 +5,10 @@ use warnings;
 
 use lib 'lib';
 
-use experimental 'say';
+use experimental qw[
+    postderef
+    say
+];
 
 use Data::Dumper ();
 use Path::Class  ();
@@ -13,14 +16,11 @@ use Path::Class  ();
 use Importer 'Code::Tooling::Util::JSON' => qw[ decode ];
 
 sub main {
-    my $content = '';
-    for my $line ( <STDIN> ) {
-        $content .= $line;
-    }
+    my $content = join '' => <STDIN>;
     my $modules = decode($content);
     for my $module ( @$modules ) {
         say '---------analyzing module',$module->{namespace},'---------';
-        if(!keys %{$module->{meta}->{cpan}}) {
+        if(!keys $module->{meta}->{cpan}->%*) {
             say 'No CPAN entry';
         }
         if( defined $module->{meta}->{cpan}
