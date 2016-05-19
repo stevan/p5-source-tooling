@@ -31,7 +31,6 @@ sub main {
         'exclude=s' => \$exclude,
         'include=s' => \$include,
         # development
-        'offline'   => \$offline,
         'verbose'   => \$DEBUG,
     );
 
