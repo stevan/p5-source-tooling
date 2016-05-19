@@ -22,12 +22,7 @@ sub main {
     (defined $f)
         || die 'You must pass a function to map';
 
-    my $src = (
-        ('$f = sub {')
-        . ('local $_ = $_[0];')
-        . ($f.';')
-      . ('}')
-    );
+    my $src = '$f = sub { '.$f.'; }';
 
     (eval $src && ref $f eq 'CODE')
         || die 'Unable to compile function: ' . $f . ' because: ' . $@;
@@ -38,10 +33,7 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my @output;
-    foreach my $datum ( @$data ) {
-        push @output => $f->( $datum );
-    }
+    my @output = map $f->(), @$data;
 
     print encode( \@output );
 }
