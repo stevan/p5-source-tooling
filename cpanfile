@@ -13,7 +13,8 @@ requires 'JSON::XS'         => 0;
 requires 'List::Util'       => 1.45;
 
 # Web
-requires 'Plack'            => 0;
+requires 'Plack'                          => 0;
+requires 'Plack::Middleware::CrossOrigin' => 0;
 
 # Analysis
 requires 'PPI'              => 0;

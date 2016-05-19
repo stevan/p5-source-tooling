@@ -25,7 +25,7 @@ my $PERL     = Code::Tooling::Perl->new( perlcritic_profile => $ENV{CRITIC_PROFI
 
 builder {
 
-    #enable 'CrossOrigin', origins => '*';
+    enable 'CrossOrigin', origins => '*';
 
     mount '/fs/' => sub {
         my $r    = Plack::Request->new( $_[0] );
