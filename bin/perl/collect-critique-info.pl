@@ -95,30 +95,36 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
-    #extract_critique_info_paralelly( \@critiques );
+    #extract_critique_info_parallely( \@critiques );
     extract_critique_info_serially( \@critiques );
 }
 
 main && exit;
 
 sub extract_critique_info_serially ($critiques) {
-    state $perl = Code::Tooling::Perl->new;
+    my $perl = Code::Tooling::Perl->new;
     for my $critique ( @$critiques ) {
         my $file = delete $critique->{file};
-        $critique->{critique_info} = $perl->critique( $file,'' );
-        $critique->{file_name} = $file->stringify;
+        eval {
+            $critique->{critique_info} = $perl->critique( $file,{} );
+            $critique->{file_name} = $file->stringify;
+            warn "Succesfully fetched critique info about $file" if $DEBUG;
+            1;
+        } or do {
+            warn "Unable to fetch critique info about $file because $@";
+        };
     }
     print encode($critiques);
 }
 
 sub extract_file_names ($source, $critiques) {
-    push @$critiques , { file => $source };
+    push @$critiques , { file => $source } unless $source->stringify =~ /.*\.p[ml]$/ ;
     return;
 }
 
-sub extract_critique_info_paralelly ($critiques) {
-    state $perl = Code::Tooling::Perl->new;
-    state $pm = Parallel::ForkManager->new($MAX_PROCESS_CNT);
+sub extract_critique_info_parallely ($critiques) {
+    my $perl = Code::Tooling::Perl->new;
+    my $pm = Parallel::ForkManager->new($MAX_PROCESS_CNT);
 
     $pm->run_on_finish( sub {
         my ($pid, $exit_code, $ident) = @_;
@@ -147,8 +153,14 @@ sub extract_critique_info_paralelly ($critiques) {
             my $output_file = Path::Class::File->new( $id.'.out' );
             for my $critique( @$cur_critiques ) {
                 my $file = delete $critique->{file};
-                $critique->{critique_info} = $perl->critique( $file,'' );
-                $critique->{file_name} = $file->stringify;
+                eval {
+                    $critique->{critique_info} = $perl->critique( $file,{} );
+                    $critique->{file_name} = $file->stringify;
+                    warn "Succesfully fetched critique info about $file" if $DEBUG;
+                    1;
+                } or do {
+                    warn "Unable to fetch critique info about $file because $@" if $DEBUG;
+                };
             }
             #print encode($cur_critiques);
             $output_file->spew_lines(encode($cur_critiques));
