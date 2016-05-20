@@ -15,12 +15,15 @@ use Getopt::Long ();
 use Data::Dumper ();
 
 use Code::Tooling::Perl;
+use Parallel::ForkManager;
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
 
 our $DEBUG = 0;
 our $ROOT;
+our $MAX_PROCESS_CNT = 3;
+our $PCS_CNT = 0;
 
 sub main {
 
@@ -83,7 +86,7 @@ sub main {
     #           perl critiques
     traverse_filesystem(
         $ROOT,
-        \&extract_critique_info,
+        \&extract_file_names,
         \@critiques,
         (
             ($exclude ? (exclude => $exclude) : ()),
@@ -91,14 +94,69 @@ sub main {
         )
     );
 
-    print encode( \@critiques );
+    # Step 2. - generate critique info serially/paralelly
+    #extract_critique_info_paralelly( \@critiques );
+    extract_critique_info_serially( \@critiques );
 }
 
 main && exit;
 
-sub extract_critique_info ($source, $acc) {
+sub extract_critique_info_serially ($critiques) {
     state $perl = Code::Tooling::Perl->new;
-    push @$acc , $perl->critique( $source, '' );
+    for my $critique ( @$critiques ) {
+        my $file = delete $critique->{file};
+        $critique->{critique_info} = $perl->critique( $file,'' );
+        $critique->{file_name} = $file->stringify;
+    }
+    print encode($critiques);
+}
+
+sub extract_file_names ($source, $critiques) {
+    push @$critiques , { file => $source };
+    return;
+}
+
+sub extract_critique_info_paralelly ($critiques) {
+    state $perl = Code::Tooling::Perl->new;
+    state $pm = Parallel::ForkManager->new($MAX_PROCESS_CNT);
+
+    $pm->run_on_finish( sub {
+        my ($pid, $exit_code, $ident) = @_;
+        print "** $ident just got out of the pool ".
+        "with PID $pid and exit code: $exit_code\n" if $DEBUG;
+    });
+
+    $pm->run_on_start( sub {
+        my ($pid, $ident)=@_;
+        print "** $ident started, pid: $pid\n" if $DEBUG;
+    });
+
+    $pm->run_on_wait( sub {
+            print "** waiting for children ...\n" if $DEBUG;
+        },
+        60
+    );
+    my $seg_size = $MAX_PROCESS_CNT>0 ? (((@$critiques)/$MAX_PROCESS_CNT)+1) : 1;
+
+    my @critiques_groups;
+    push @critiques_groups, [ splice @$critiques, 0, $seg_size ] while @$critiques;
+    my $id = 1;
+    for my $cur_critiques ( @critiques_groups ) {
+        my $pid = $pm->start('child_'.$id); # do the fork
+        if ($pid == 0) {
+            my $output_file = Path::Class::File->new( $id.'.out' );
+            for my $critique( @$cur_critiques ) {
+                my $file = delete $critique->{file};
+                $critique->{critique_info} = $perl->critique( $file,'' );
+                $critique->{file_name} = $file->stringify;
+            }
+            #print encode($cur_critiques);
+            $output_file->spew_lines(encode($cur_critiques));
+            $pm->finish;
+        }
+        $id++;
+    }
+    $pm->wait_all_children;
     return;
 }
 
