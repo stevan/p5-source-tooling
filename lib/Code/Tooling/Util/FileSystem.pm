@@ -15,10 +15,10 @@ our @EXPORT_OK = qw[
 sub traverse_filesystem ($dir, $v, $acc, %opts) {
 
     # when it's not a dir, it's a file
+
     if ( -f $dir ) {
         $v->( $dir, $acc );
-    }
-    else {
+    } elsif  ( -d $dir ) {
         my @children = $dir->children( no_hidden => 1 );
 
         if ( my $exclude = $opts{exclude} ) {
@@ -30,6 +30,10 @@ sub traverse_filesystem ($dir, $v, $acc, %opts) {
         }
 
         map __SUB__->( $_, $v, $acc, %opts ), @children;
+    } elsif ( -l $dir ) {
+        warn "symlink found" if $DEBUG;
+    } else {
+        warn "unknown file category" if $DEBUG;
     }
 
     return;

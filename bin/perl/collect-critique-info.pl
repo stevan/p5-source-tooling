@@ -13,6 +13,7 @@ use experimental qw[
 use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
+use Path::Tiny;
 
 use Code::Tooling::Perl;
 use Parallel::ForkManager;
@@ -45,7 +46,7 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    my @critiques;
+    my @files;
 
     # The data structure within @critiques is
     # as follows:
@@ -87,7 +88,7 @@ sub main {
     traverse_filesystem(
         $ROOT,
         \&extract_file_names,
-        \@critiques,
+        \@files,
         (
             ($exclude ? (exclude => $exclude) : ()),
             ($include ? (include => $include) : ()),
@@ -95,34 +96,37 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
-    #extract_critique_info_parallely( \@critiques );
-    extract_critique_info_serially( \@critiques );
+    extract_critique_info_parallely( \@files );
+    # extract_critique_info_serially( \@files );
 }
 
 main && exit;
 
-sub extract_critique_info_serially ($critiques) {
+sub extract_critique_info_serially ($files) {
     my $perl = Code::Tooling::Perl->new;
-    for my $critique ( @$critiques ) {
-        my $file = delete $critique->{file};
+    my $output_file = path( 'serial.out' );
+    for my $file ( @$files ) {
         eval {
-            $critique->{critique_info} = $perl->critique( $file,{} );
-            $critique->{file_name} = $file->stringify;
+            my $critique_hash = {};
+            $critique_hash->{critique} = $perl->critique( $file,{} );
+            $critique_hash->{file_name} = $file->stringify;
             warn "Succesfully fetched critique info about $file" if $DEBUG;
+            $output_file->append(encode($critique_hash));
             1;
         } or do {
             warn "Unable to fetch critique info about $file because $@";
         };
     }
-    print encode($critiques);
 }
 
-sub extract_file_names ($source, $critiques) {
-    push @$critiques , { file => $source } unless $source->stringify =~ /.*\.p[ml]$/ ;
+sub extract_file_names ($source, $files) {
+    push @$files , $source unless $source->stringify =~ /.*\.p[ml]$/ ;
     return;
 }
 
-sub extract_critique_info_parallely ($critiques) {
+
+
+sub extract_critique_info_parallely ($files) {
     my $perl = Code::Tooling::Perl->new;
     my $pm = Parallel::ForkManager->new($MAX_PROCESS_CNT);
 
@@ -142,28 +146,33 @@ sub extract_critique_info_parallely ($critiques) {
         },
         60
     );
-    my $seg_size = $MAX_PROCESS_CNT>0 ? (((@$critiques)/$MAX_PROCESS_CNT)+1) : 1;
+    my $seg_size = $MAX_PROCESS_CNT>0 ? (((@$files)/$MAX_PROCESS_CNT)+ 1 ) : 1;
 
-    my @critiques_groups;
-    push @critiques_groups, [ splice @$critiques, 0, $seg_size ] while @$critiques;
+    #randomizing the files to get a better distribution
+    #@$files = rand @$files;
+
+    #divide in groups to be processed by each process
+    my @files_groups;
+    push @files_groups, [ splice @$files, 0, $seg_size ] while @$files;
+
     my $id = 1;
-    for my $cur_critiques ( @critiques_groups ) {
+    for my $cur_files ( @files_groups ) {
         my $pid = $pm->start('child_'.$id); # do the fork
         if ($pid == 0) {
-            my $output_file = Path::Class::File->new( $id.'.out' );
-            for my $critique( @$cur_critiques ) {
-                my $file = delete $critique->{file};
+            my $output_file = path( $id.'.out' );
+            for my $file ( @$cur_files ) {
                 eval {
-                    $critique->{critique_info} = $perl->critique( $file,{} );
-                    $critique->{file_name} = $file->stringify;
+                    my $critique_hash = {};
+                    $critique_hash->{critique} = $perl->critique( $file,{} );
+                    $critique_hash->{file_name} = $file->stringify;
                     warn "Succesfully fetched critique info about $file" if $DEBUG;
+                    $output_file->append(encode($critique_hash));
                     1;
                 } or do {
                     warn "Unable to fetch critique info about $file because $@" if $DEBUG;
                 };
             }
             #print encode($cur_critiques);
-            $output_file->spew_lines(encode($cur_critiques));
             $pm->finish;
         }
         $id++;
@@ -171,5 +180,6 @@ sub extract_critique_info_parallely ($critiques) {
     $pm->wait_all_children;
     return;
 }
+
 
 1;
