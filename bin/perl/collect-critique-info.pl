@@ -106,7 +106,6 @@ sub main {
 main && exit;
 
 sub extract_critique_info_serially ($files) {
-    print "p";
     my $perl = Code::Tooling::Perl->new;
     my $output_file = path( 'serial.out' );
     for my $file ( @$files ) {
@@ -132,7 +131,6 @@ sub extract_critique_info_parallely ($files) {
     my $perl = Code::Tooling::Perl->new;
     my $pm = Parallel::ForkManager->new($MAX_PROCESS_CNT);
 
-    print "p";
     $pm->run_on_finish( sub {
         my ($pid, $exit_code, $ident) = @_;
         print "** $ident just got out of the pool ".
