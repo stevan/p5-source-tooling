@@ -23,19 +23,19 @@ use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
 
 our $DEBUG = 0;
 our $ROOT;
-our $MAX_PROCESS_CNT = 3;
-our $PCS_CNT = 0;
+our $MAX_PROCESS_CNT;
 
 sub main {
 
-    my ($exclude, $include, $offline);
+    my ($exclude, $include);
     Getopt::Long::GetOptions(
-        'root=s'    => \$ROOT,
+        'root=s'            => \$ROOT,
         # filters
-        'exclude=s' => \$exclude,
-        'include=s' => \$include,
+        'exclude=s'         => \$exclude,
+        'include=s'         => \$include,
         # development
-        'verbose'   => \$DEBUG,
+        'verbose'           => \$DEBUG,
+        'parallel_process'  => \$MAX_PROCESS_CNT,
     );
 
     (-e $ROOT && -d $ROOT)
@@ -45,6 +45,9 @@ sub main {
 
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
+
+    (defined ($MAX_PROCESS_CNT) && $MAX_PROCESS_CNT !~ /^\d+\$/)
+        && die 'parallel_process has to be a number';
 
     my @files;
 
@@ -96,8 +99,8 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
-    # extract_critique_info_parallely( \@files );
-    extract_critique_info_serially( \@files );
+    extract_critique_info_serially( \@files ) if(!$MAX_PROCESS_CNT);
+    extract_critique_info_parallely( \@files ) if($MAX_PROCESS_CNT);
 }
 
 main && exit;
