@@ -17,6 +17,7 @@ use Path::Tiny;
 
 use Code::Tooling::Perl;
 use Parallel::ForkManager;
+use List::Util qw(shuffle);
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
@@ -149,8 +150,8 @@ sub extract_critique_info_parallely ($files) {
     );
     my $seg_size = $MAX_PROCESS_CNT>0 ? (((@$files)/$MAX_PROCESS_CNT)+ 1 ) : 1;
 
-    #randomizing the files to get a better distribution
-    #@$files = rand @$files;
+    #shuffling the files to get a better distribution
+    @$files = shuffle @$files;
 
     #divide in groups to be processed by each process
     my @files_groups;
