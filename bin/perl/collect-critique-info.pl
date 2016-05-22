@@ -29,13 +29,13 @@ sub main {
 
     my ($exclude, $include);
     Getopt::Long::GetOptions(
-        'root=s'            => \$ROOT,
+        'root=s'                => \$ROOT,
         # filters
-        'exclude=s'         => \$exclude,
-        'include=s'         => \$include,
+        'exclude=s'             => \$exclude,
+        'include=s'             => \$include,
         # development
-        'verbose'           => \$DEBUG,
-        'parallel_process'  => \$MAX_PROCESS_CNT,
+        'verbose'               => \$DEBUG,
+        'parallel_process=s'    => \$MAX_PROCESS_CNT,
     );
 
     (-e $ROOT && -d $ROOT)
@@ -46,7 +46,7 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    (defined ($MAX_PROCESS_CNT) && $MAX_PROCESS_CNT !~ /^\d+\$/)
+    (defined ($MAX_PROCESS_CNT) && $MAX_PROCESS_CNT !~ /^(\d)+$/)
         && die 'parallel_process has to be a number';
 
     my @files;
@@ -106,6 +106,7 @@ sub main {
 main && exit;
 
 sub extract_critique_info_serially ($files) {
+    print "p";
     my $perl = Code::Tooling::Perl->new;
     my $output_file = path( 'serial.out' );
     for my $file ( @$files ) {
@@ -131,6 +132,7 @@ sub extract_critique_info_parallely ($files) {
     my $perl = Code::Tooling::Perl->new;
     my $pm = Parallel::ForkManager->new($MAX_PROCESS_CNT);
 
+    print "p";
     $pm->run_on_finish( sub {
         my ($pid, $exit_code, $ident) = @_;
         print "** $ident just got out of the pool ".
