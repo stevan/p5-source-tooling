@@ -96,8 +96,8 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
-    extract_critique_info_parallely( \@files );
-    # extract_critique_info_serially( \@files );
+    # extract_critique_info_parallely( \@files );
+    extract_critique_info_serially( \@files );
 }
 
 main && exit;
@@ -114,17 +114,15 @@ sub extract_critique_info_serially ($files) {
             $output_file->append(encode($critique_hash));
             1;
         } or do {
-            warn "Unable to fetch critique info about $file because $@";
+            warn "Unable to fetch critique info about $file because $@" if $DEBUG;
         };
     }
 }
 
 sub extract_file_names ($source, $files) {
-    push @$files , $source unless $source->stringify =~ /.*\.p[ml]$/ ;
+    push @$files , $source if $source->stringify =~ /.*\.p[ml]$/ ;
     return;
 }
-
-
 
 sub extract_critique_info_parallely ($files) {
     my $perl = Code::Tooling::Perl->new;
