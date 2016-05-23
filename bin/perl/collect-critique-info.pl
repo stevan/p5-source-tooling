@@ -121,6 +121,7 @@ sub extract_critique_info_serially ($files) {
             warn "Unable to fetch critique info about $file because $@" if $DEBUG;
         };
     }
+    $output_file->append("finished Successfully!!!!!");
 }
 
 sub extract_file_names ($source, $files) {
@@ -174,7 +175,7 @@ sub extract_critique_info_parallely ($files) {
                     warn "Unable to fetch critique info about $file because $@" if $DEBUG;
                 };
             }
-            #print encode($cur_critiques);
+            $output_file->append("finished Successfully!!!!! by child $id");
             $pm->finish;
         }
         $id++;
