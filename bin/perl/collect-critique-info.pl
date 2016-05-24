@@ -155,25 +155,26 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     push @files_groups, [ splice @$files, 0, $seg_size ] while @$files;
 
     my $id = 1;
+    my @temp_file_handlers;
     for my $cur_files ( @files_groups ) {
+        my $output_file = File::Temp->new();
+        push @temp_file_handlers, $output_file;
         my $pid = $pm->start('child_'.$id); # do the fork
         if ($pid == 0) {
             my @critiques;
             extract_critique_info_serially( $cur_files, \@critiques );
-            my $output_file = Path::Class::File->new( $id.'.out' );
-            $output_file->spew_lines(encode( \@critiques ));
+            $output_file->write( encode( \@critiques ) );
             $pm->finish;
         }
         $id++;
     }
     $pm->wait_all_children;
 
-    for my $id ( 1..@files_groups ) {
-        my $file = Path::Class::File->new( $id.'.out' );
-        my $content = $file->slurp;
+    for my $temp_fh ( @temp_file_handlers ) {
+        $temp_fh->seek(0, 0);
+        my $content = join '' => <$temp_fh>;
         my $critiques = decode($content);
         push $merged_critiques->@*, $critiques->@*;
-        $file->remove;
     }
     return;
 }
