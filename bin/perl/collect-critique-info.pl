@@ -148,28 +148,27 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
         },
         60
     );
-    my $seg_size = int( (@$files) / $parallel_processors_cnt ) + int( ( (@$files) % $parallel_processors_cnt ) ? 1 : 0);
 
-    #divide in groups to be processed by each process
+    # divide files in groups to be processed by each process
     my @files_groups;
-    push @files_groups, [ splice @$files, 0, $seg_size ] while @$files;
+    divide_files_in_groups($files, $parallel_processors_cnt, \@files_groups);
 
-    my $id = 1;
+    # run all the process parallely to generate result
     my @temp_file_handlers;
     for my $cur_files ( @files_groups ) {
         my $output_file = File::Temp->new();
         push @temp_file_handlers, $output_file;
-        my $pid = $pm->start('child_'.$id); # do the fork
+        my $pid = $pm->start; # do the fork
         if ($pid == 0) {
             my @critiques;
             extract_critique_info_serially( $cur_files, \@critiques );
             $output_file->write( encode( \@critiques ) );
             $pm->finish;
         }
-        $id++;
     }
     $pm->wait_all_children;
 
+    #merge all the temp files
     for my $temp_fh ( @temp_file_handlers ) {
         $temp_fh->seek(0, 0);
         my $content = join '' => <$temp_fh>;
@@ -180,5 +179,13 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     return;
 }
 
+sub divide_files_in_groups ($files, $parallel_processors_cnt, $files_groups) {
+    use integer;
+    my $min_seg_size = (@$files) / $parallel_processors_cnt;
+    my $cnt_large_segs = (@$files) % $parallel_processors_cnt;
+    push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] until $cnt_large_segs-- < 1;    
+    push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
+    return;
+}
 
 1;
