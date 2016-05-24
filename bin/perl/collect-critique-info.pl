@@ -176,6 +176,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
         my $critiques = decode($content);
         push $merged_critiques->@*, $critiques->@*;
     }
+    warn "parallel run was successful" if $DEBUG;
     return;
 }
 
