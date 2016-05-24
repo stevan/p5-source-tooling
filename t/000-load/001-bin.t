@@ -16,6 +16,7 @@ is(system('perl', '-c', $_), 0, '... loaded ' . $_ . ' okay') foreach qw[
     bin/json/prune.pl
 
     bin/perl/collect-module-info.pl
+    bin/perl/translate-module-info.pl
 ];
 
 done_testing;
