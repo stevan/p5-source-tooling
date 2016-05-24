@@ -182,7 +182,7 @@ sub divide_files_in_groups ($files, $parallel_processors_cnt, $files_groups) {
     use integer;
     my $min_seg_size = (@$files) / $parallel_processors_cnt;
     my $cnt_large_segs = (@$files) % $parallel_processors_cnt;
-    push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] until $cnt_large_segs-- < 1;    
+    push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
     push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
     return;
 }
