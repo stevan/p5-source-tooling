@@ -44,8 +44,8 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    (defined $parallel_processors_cnt && ($parallel_processors_cnt<=0 || $parallel_processors_cnt>10))
-        && die 'parallel_process has to be in the range [1,10]';
+    (defined $parallel_processors_cnt && ($parallel_processors_cnt<=1 || $parallel_processors_cnt>10))
+        && die 'parallel_process has to be in the range [2,10]';
 
     my (@files, @critiques);
 
