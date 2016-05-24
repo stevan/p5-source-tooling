@@ -6,7 +6,6 @@ use warnings;
 use lib 'lib';
 
 use experimental qw[
-    state
     signatures
     postderef
 ];
