@@ -115,7 +115,7 @@ sub extract_file_names ($source, $files) {
 
 sub extract_critique_info_serially ($files, $critiques) {
     my $perl = Code::Tooling::Perl->new;
-    for my $file ( @$files ) {
+    for my $file ( $files->@* ) {
         eval {
             my $critique_hash = {};
             $critique_hash->{critique} = $perl->critique( $file,{} );
