@@ -108,7 +108,6 @@ main && exit;
 
 sub extract_file_names ($source, $files) {
     push @$files , $source if $source->stringify =~ /\.p[ml]$/ ;
-    return;
 }
 
 sub extract_critique_info_serially ($files, $critiques) {
@@ -125,7 +124,6 @@ sub extract_critique_info_serially ($files, $critiques) {
             warn "Unable to fetch critique info about $file because $@" if $DEBUG;
         };
     }
-    return; 
 }
 
 sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_processors_cnt) {
@@ -175,7 +173,6 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
         push $merged_critiques->@*, $critiques->@*;
     }
     warn "parallel run was successful" if $DEBUG;
-    return;
 }
 
 sub divide_files_in_groups ($files, $parallel_processors_cnt, $files_groups) {
@@ -183,7 +180,6 @@ sub divide_files_in_groups ($files, $parallel_processors_cnt, $files_groups) {
     my $cnt_large_segs = (@$files) % $parallel_processors_cnt;
     push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
     push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
-    return;
 }
 
 1;
