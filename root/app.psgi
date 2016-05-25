@@ -10,7 +10,6 @@ use Plack::Request;
 use Plack::Builder;
 
 use Path::Class ();
-use File::Spec  ();
 
 use Code::Tooling::Perl;
 use Code::Tooling::Git;
