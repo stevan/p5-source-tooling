@@ -111,6 +111,7 @@ main && exit;
 
 sub extract_file_names ($source, $files) {
     push @$files , $source if $source->stringify =~ /\.p[ml]$/ ;
+    return;
 }
 
 sub extract_critique_info_serially ($files, $critiques) {
