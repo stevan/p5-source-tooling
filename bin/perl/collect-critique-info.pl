@@ -25,7 +25,7 @@ our $ROOT;
 
 sub main {
 
-    my ($exclude, $include, $parallel_processors_cnt);
+    my ($exclude, $include, $num_processes);
     Getopt::Long::GetOptions(
         'root=s'                => \$ROOT,
         # filters
@@ -33,7 +33,7 @@ sub main {
         'include=s'             => \$include,
         # development
         'verbose'               => \$DEBUG,
-        'parallel_process=i'    => \$parallel_processors_cnt,
+        'parallel_process=i'    => \$num_processes,
     );
 
     (-e $ROOT && -d $ROOT)
@@ -44,7 +44,7 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    (defined $parallel_processors_cnt && ($parallel_processors_cnt<=1 || $parallel_processors_cnt>10))
+    (defined $num_processes && ($num_processes<=1 || $num_processes>10))
         && die 'parallel_process has to be in the range [2,10]';
 
     my (@files, @critiques);
@@ -97,8 +97,8 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
-    if($parallel_processors_cnt) {
-        extract_critique_info_parallely( \@files, \@critiques, $parallel_processors_cnt );
+    if($num_processes) {
+        extract_critique_info_parallely( \@files, \@critiques, $num_processes );
     } else {
         extract_critique_info_serially( \@files, \@critiques );
     }
@@ -130,8 +130,8 @@ sub extract_critique_info_serially ($files, $critiques) {
     }
 }
 
-sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_processors_cnt) {
-    my $pm = Parallel::ForkManager->new($parallel_processors_cnt);
+sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) {
+    my $pm = Parallel::ForkManager->new($num_processes);
 
     $pm->run_on_finish( sub {
         my ($pid, $exit_code, $ident) = @_;
@@ -151,7 +151,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     );
 
     # divide files in groups to be processed by each process
-    my $files_groups = divide_files_in_groups($files, $parallel_processors_cnt);
+    my $files_groups = divide_files_in_groups($files, $num_processes);
 
     # run all the process parallely to generate result
     my @temp_file_handlers;
@@ -178,10 +178,10 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     warn "parallel run was successful" if $DEBUG;
 }
 
-sub divide_files_in_groups ($files, $parallel_processors_cnt) {
+sub divide_files_in_groups ($files, $num_processes) {
     my $files_groups = [];
-    my $min_seg_size = int( (@$files) / $parallel_processors_cnt );
-    my $cnt_large_segs = (@$files) % $parallel_processors_cnt;
+    my $min_seg_size = int( (@$files) / $num_processes );
+    my $cnt_large_segs = (@$files) % $num_processes;
     push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
     push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
     return $files_groups;
