@@ -17,12 +17,22 @@ use Code::Tooling::Git;
 
 use Importer 'Code::Tooling::Util::JSON' => qw[ encode ];
 
+# Constants
+
+use constant PERLDOC_URL_TEMPLATE  => 'http://perldoc.perl.org/%s';
+use constant METACPAN_URL_TEMPLATE => 'https://metacpan.org/search?search_type=modules&q=%s';
+
+# Config
+
 $ENV{CHECKOUT}       ||= '.';
 $ENV{CRITIC_PROFILE} ||= './config/perlcritic.ini';
 $ENV{PERL_VERSION}   ||= $];
-$ENV{PERL_LIB_ROOT}  ||= File::Spec->catdir( $ENV{CHECKOUT}, 'lib' );
+$ENV{PERL_LIB_ROOT}  ||= 'lib';
+
+# Globals
 
 my $CHECKOUT = Path::Class::Dir->new( $ENV{CHECKOUT} );
+my $PERL_LIB = $CHECKOUT->subdir( $ENV{PERL_LIB_ROOT} );
 
 my $GIT = Code::Tooling::Git->new(
     work_tree => $CHECKOUT
@@ -32,6 +42,8 @@ my $PERL = Code::Tooling::Perl->new(
     perlcritic_profile => $ENV{CRITIC_PROFILE},
     perl_version       => $ENV{PERL_VERSION},
 );
+
+# ...
 
 builder {
 
@@ -112,13 +124,35 @@ builder {
 
         mount '/module/' => builder {
             mount '/classify/' => sub {
-                my $r       = Plack::Request->new( $_[0] );
-                my $modules = $PERL->classify_modules( grep $_, split /\,/ => ($r->path =~ s/^\///r) );
+                my $r          = Plack::Request->new( $_[0] );
+                my @modules    = grep $_, split /\,/ => ($r->path =~ s/^\///r); #/
+                my $classified = $PERL->classify_modules( @modules );
+
+                # do some enhancement/fixup for the benefit
+                # of a UI that is using this API
+                foreach my $module ( @$classified ) {
+                    my $path = $PERL_LIB->file( $module->{path} )
+                                        ->relative( $CHECKOUT )
+                                        ->stringify;
+                    if ( -f $path ) {
+                        $module->{path}     = $path;
+                        $module->{is_local} = 1;
+                    }
+                    else {
+                        $module->{is_local} = 0;
+                        if ( $module->{is_core} ) {
+                            $module->{url} = sprintf PERLDOC_URL_TEMPLATE, ($module->{path} =~ s/\.pm$/\.html/r); #/
+                        } else {
+                            $module->{url} = sprintf METACPAN_URL_TEMPLATE, $module->{name};
+                        }
+                        delete $module->{path};
+                    }
+                }
 
                 return [
                     200,
                     [ 'Content-Type' => 'application/json' ],
-                    [ encode( $modules ) ]
+                    [ encode( $classified ) ]
                 ];
             };
         };
