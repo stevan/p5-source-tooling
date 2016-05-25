@@ -19,15 +19,11 @@ sub new ($class, %args) {
     $args{perl_version} = version->parse( $args{perl_version} )->numify
         if $args{perl_version};
 
-    $args{perl_lib_root} = Path::Class::Dir->new( $args{perl_lib_root} )
-        if $args{perl_lib_root};
-
     return bless {
         # hash slices FTW
         %args{qw[
             perlcritic_profile
             perl_version
-            perl_lib_root
         ]},
     } => $class;
 }
@@ -44,16 +40,11 @@ sub is_module_deprecated ($self, $module) {
 
 sub classify_modules ($self, @modules) {
     return [
-        map {
-            my $path     = Module::Runtime::module_notional_filename( $_ );
-            my $is_local = $self->{perl_lib_root} && -f $self->{perl_lib_root}->file( $path );
-            +{
-                is_core  => ($self->is_core_module( $_ ) ? 1 : 0),
-                name     => $_,
-                path     => $path,
-                is_local => ($is_local ? 1 : 0),
-            };
-        } @modules
+        map +{
+            is_core => ($self->is_core_module( $_ ) ? 1 : 0),
+            name    => $_,
+            path    => Module::Runtime::module_notional_filename( $_ ),
+        }, @modules
     ];
 }
 
