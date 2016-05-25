@@ -31,7 +31,6 @@ my $GIT = Code::Tooling::Git->new(
 my $PERL = Code::Tooling::Perl->new(
     perlcritic_profile => $ENV{CRITIC_PROFILE},
     perl_version       => $ENV{PERL_VERSION},
-    perl_lib_root      => $ENV{PERL_LIB_ROOT},
 );
 
 builder {
