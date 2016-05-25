@@ -4,17 +4,58 @@ use v5.22;
 use warnings;
 use experimental 'signatures';
 
-use Perl::Critic;
+use Perl::Critic     ();
+use version          ();
+use Module::CoreList ();
+use Module::Runtime  ();
+use Path::Class      ();
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
 
 sub new ($class, %args) {
-    return bless { %args } => $class;
+
+    $args{perl_version} = version->parse( $args{perl_version} )->numify
+        if $args{perl_version};
+
+    $args{perl_lib_root} = Path::Class::Dir->new( $args{perl_lib_root} )
+        if $args{perl_lib_root};
+
+    return bless {
+        # hash slices FTW
+        %args{qw[
+            perlcritic_profile
+            perl_version
+            perl_lib_root
+        ]},
+    } => $class;
 }
 
 # ...
+
+sub is_core_module ($self, $module) {
+    !! Module::CoreList::is_core( $module, undef, $self->{perl_version} || () );
+}
+
+sub is_module_deprecated ($self, $module) {
+    !! Module::CoreList::is_deprecated( $module, $self->{perl_version} || () );
+}
+
+sub classify_modules ($self, @modules) {
+    return [
+        map {
+            my $path     = Module::Runtime::module_notional_filename( $_ );
+            my $is_local = $self->{perl_lib_root} && -f $self->{perl_lib_root}->file( $path );
+            +{
+                is_core  => ($self->is_core_module( $_ ) ? 1 : 0),
+                name     => $_,
+                path     => $path,
+                is_local => ($is_local ? 1 : 0),
+            };
+        } @modules
+    ];
+}
 
 sub extract_module_info ($self, $source) {
 

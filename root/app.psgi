@@ -10,6 +10,7 @@ use Plack::Request;
 use Plack::Builder;
 
 use Path::Class ();
+use File::Spec  ();
 
 use Code::Tooling::Perl;
 use Code::Tooling::Git;
@@ -18,10 +19,20 @@ use Importer 'Code::Tooling::Util::JSON' => qw[ encode ];
 
 $ENV{CHECKOUT}       ||= '.';
 $ENV{CRITIC_PROFILE} ||= './config/perlcritic.ini';
+$ENV{PERL_VERSION}   ||= $];
+$ENV{PERL_LIB_ROOT}  ||= File::Spec->catdir( $ENV{CHECKOUT}, 'lib' );
 
 my $CHECKOUT = Path::Class::Dir->new( $ENV{CHECKOUT} );
-my $GIT      = Code::Tooling::Git->new( work_tree => $CHECKOUT );
-my $PERL     = Code::Tooling::Perl->new( perlcritic_profile => $ENV{CRITIC_PROFILE} );
+
+my $GIT = Code::Tooling::Git->new(
+    work_tree => $CHECKOUT
+);
+
+my $PERL = Code::Tooling::Perl->new(
+    perlcritic_profile => $ENV{CRITIC_PROFILE},
+    perl_version       => $ENV{PERL_VERSION},
+    perl_lib_root      => $ENV{PERL_LIB_ROOT},
+);
 
 builder {
 
@@ -98,6 +109,19 @@ builder {
                 [ 'Content-Type' => 'application/json' ],
                 [ encode( $PERL->critique( $path, $r->query_parameters ) ) ]
             ];
+        };
+
+        mount '/module/' => builder {
+            mount '/classify/' => sub {
+                my $r       = Plack::Request->new( $_[0] );
+                my $modules = $PERL->classify_modules( grep $_, split /\,/ => ($r->path =~ s/^\///r) );
+
+                return [
+                    200,
+                    [ 'Content-Type' => 'application/json' ],
+                    [ encode( $modules ) ]
+                ];
+            };
         };
     };
 
