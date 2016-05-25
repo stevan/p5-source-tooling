@@ -167,7 +167,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     }
     $pm->wait_all_children;
 
-    #merge all the temp files
+    # merge all the temp files
     for my $temp_fh ( @temp_file_handlers ) {
         $temp_fh->seek(0, 0);
         my $content = join '' => <$temp_fh>;
@@ -179,8 +179,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
 }
 
 sub divide_files_in_groups ($files, $parallel_processors_cnt, $files_groups) {
-    use integer;
-    my $min_seg_size = (@$files) / $parallel_processors_cnt;
+    my $min_seg_size = int( (@$files) / $parallel_processors_cnt );
     my $cnt_large_segs = (@$files) % $parallel_processors_cnt;
     push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
     push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
