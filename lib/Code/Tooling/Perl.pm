@@ -8,7 +8,6 @@ use Perl::Critic     ();
 use version          ();
 use Module::CoreList ();
 use Module::Runtime  ();
-use Path::Class      ();
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
