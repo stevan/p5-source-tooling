@@ -140,11 +140,9 @@ builder {
                     }
                     else {
                         $module->{is_local} = 0;
-                        if ( $module->{is_core} ) {
-                            $module->{url} = sprintf PERLDOC_URL_TEMPLATE, ($module->{path} =~ s/\.pm$/\.html/r); #/
-                        } else {
-                            $module->{url} = sprintf METACPAN_URL_TEMPLATE, $module->{name};
-                        }
+                        $module->{url}      = $module->{is_core}
+                            ? (sprintf PERLDOC_URL_TEMPLATE, ($module->{path} =~ s/\.pm$/\.html/r)) #/
+                            : (sprintf METACPAN_URL_TEMPLATE, $module->{name});
                         delete $module->{path};
                     }
                 }
