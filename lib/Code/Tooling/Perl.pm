@@ -107,6 +107,9 @@ sub extract_module_info ($self, $source) {
 
 sub critique ($self, $path, $query) {
 
+    ($self->{perlcritic_profile} && -f $self->{perlcritic_profile})
+        || die 'The Perl::Critic profile must be set to a valid file path before running the `critique` method';
+
     my $critic     = Perl::Critic->new( -profile => $self->{perlcritic_profile} );
     my @violations = $critic->critique( $path->stringify );
     my $statistics = $critic->statistics;
