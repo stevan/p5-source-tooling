@@ -28,6 +28,7 @@ $ENV{CHECKOUT}       ||= '.';
 $ENV{CRITIC_PROFILE} ||= './config/perlcritic.ini';
 $ENV{PERL_VERSION}   ||= $];
 $ENV{PERL_LIB_ROOT}  ||= 'lib';
+$ENV{PERLDOC_BIN}    ||= 'perldoc';
 
 # Globals
 
@@ -120,6 +121,19 @@ builder {
                 [ 'Content-Type' => 'application/json' ],
                 [ encode( $PERL->critique( $path, $r->query_parameters ) ) ]
             ];
+        };
+
+        mount '/doc/' => sub {
+            my $r    = Plack::Request->new( $_[0] );
+            my $args = $r->query_parameters;
+
+            return [ 400, [], [ 'You must specify either a function name' ]]
+                unless $args->{f};
+
+            my @cmd  = ($ENV{PERLDOC_BIN}, '-o', 'HTML', '-f', $args->{f});
+            my @html = `@cmd`;
+
+            return [ 200, [ 'Content-Type' => 'text/html' ], [ @html ]];
         };
 
         mount '/module/' => builder {
