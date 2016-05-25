@@ -147,12 +147,11 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     );
 
     # divide files in groups to be processed by each process
-    my @files_groups;
-    divide_files_in_groups($files, $parallel_processors_cnt, \@files_groups);
+    my $files_groups = divide_files_in_groups($files, $parallel_processors_cnt);
 
     # run all the process parallely to generate result
     my @temp_file_handlers;
-    for my $cur_files ( @files_groups ) {
+    for my $cur_files ( $files_groups->@* ) {
         my $output_file = File::Temp->new();
         push @temp_file_handlers, $output_file;
         my $pid = $pm->start; # do the fork
@@ -175,11 +174,13 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $parallel_proces
     warn "parallel run was successful" if $DEBUG;
 }
 
-sub divide_files_in_groups ($files, $parallel_processors_cnt, $files_groups) {
+sub divide_files_in_groups ($files, $parallel_processors_cnt) {
+    my $files_groups = [];
     my $min_seg_size = int( (@$files) / $parallel_processors_cnt );
     my $cnt_large_segs = (@$files) % $parallel_processors_cnt;
     push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
     push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
+    return $files_groups;
 }
 
 1;
