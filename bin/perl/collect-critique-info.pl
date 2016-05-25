@@ -97,8 +97,11 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
-    extract_critique_info_serially( \@files, \@critiques ) if(!$parallel_processors_cnt);
-    extract_critique_info_parallely( \@files, \@critiques, $parallel_processors_cnt ) if($parallel_processors_cnt);
+    if($parallel_processors_cnt) {
+        extract_critique_info_parallely( \@files, \@critiques, $parallel_processors_cnt );
+    } else {
+        extract_critique_info_serially( \@files, \@critiques );
+    }
 
     # Step 3. - Prepare (machine readable) report of status of critiques
     print encode( \@critiques );
