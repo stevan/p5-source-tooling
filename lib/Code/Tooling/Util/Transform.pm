@@ -84,7 +84,7 @@ sub path_to_tree ($data, %opts) {
     };
 
     foreach my $datum ( @$data ) {
-        my @path = split $path_seperator, $datum->{ $path_key };
+        my @path = grep $_, split $path_seperator, $datum->{ $path_key };
 
         my $current = $root;
         while ( my $part = shift @path ) {
