@@ -9,6 +9,8 @@ use version          ();
 use Module::CoreList ();
 use Module::Runtime  ();
 
+use Code::Tooling::Perl::MetaCPAN;
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
@@ -19,6 +21,7 @@ sub new ($class, %args) {
         if $args{perl_version};
 
     return bless {
+        _metacpan => Code::Tooling::Perl::MetaCPAN->new( @{ $args{metacpan_args} || [] } ),
         # hash slices FTW
         %args{qw[
             perlcritic_profile
@@ -27,7 +30,11 @@ sub new ($class, %args) {
     } => $class;
 }
 
-# ...
+# metacpan
+
+sub metacpan { $_[0]->{_metacpan} }
+
+# general module stuff
 
 sub is_core_module ($self, $module) {
     !! Module::CoreList::is_core( $module, undef, $self->{perl_version} || () );
@@ -46,6 +53,8 @@ sub classify_modules ($self, @modules) {
         }, @modules
     ];
 }
+
+## PPI related stuff
 
 sub extract_module_info ($self, $source) {
 
@@ -135,6 +144,8 @@ sub extract_module_info ($self, $source) {
 
     return \@modules;
 }
+
+# Perl::Critic oriented stuff
 
 sub critique ($self, $path, $query) {
 
