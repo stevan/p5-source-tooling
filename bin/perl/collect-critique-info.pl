@@ -19,6 +19,7 @@ use Parallel::ForkManager;
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode decode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
+use Importer 'Code::Tooling::Util::List'       => qw[ split_array_in_equal_groups ];
 
 our $DEBUG = 0;
 our $ROOT;
@@ -151,7 +152,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
     );
 
     # divide files in groups to be processed by each process
-    my $files_groups = divide_files_in_groups($files, $num_processes);
+    my $files_groups = split_array_in_equal_groups($files, $num_processes);
 
     # run all the process parallely to generate result
     my @temp_file_handlers;
@@ -176,15 +177,6 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
         push $merged_critiques->@*, $critiques->@*;
     }
     warn "parallel run was successful" if $DEBUG;
-}
-
-sub divide_files_in_groups ($files, $num_processes) {
-    my $files_groups = [];
-    my $min_seg_size = int( (@$files) / $num_processes );
-    my $cnt_large_segs = (@$files) % $num_processes;
-    push $files_groups->@*, [ splice @$files, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
-    push $files_groups->@*, [ splice @$files, 0, $min_seg_size ] while @$files;
-    return $files_groups;
 }
 
 1;
