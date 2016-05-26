@@ -7,7 +7,8 @@ use lib 'lib';
 
 use Getopt::Long ();
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::JSON'      => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::Transform' => qw[ group_by ];
 
 our $DEBUG = 0;
 
@@ -27,16 +28,13 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my %output;
-    foreach my $datum ( @$data ) {
-        (exists $datum->{$key})
-            || die "Could not find key($key) in data(" . encode( $datum ) . ")";
+    my $output = group_by(
+        $data, (
+            key => $key
+        )
+    );
 
-        $output{ $datum->{$key} } = [] unless $output{ $datum->{$key} };
-        push @{ $output{ $datum->{$key} } } => $datum;
-    }
-
-    print encode( \%output );
+    print encode( $output );
 }
 
 main && exit;

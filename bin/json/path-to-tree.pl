@@ -5,13 +5,10 @@ use warnings;
 
 use lib 'lib';
 
-use experimental 'postderef';
-
-use List::Util   ();
 use Getopt::Long ();
-use Data::Dumper ();
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::JSON'      => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::Transform' => qw[ path_to_tree ];
 
 our $DEBUG = 0;
 
@@ -30,33 +27,12 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my $root = {
-        node     => 'ROOT',
-        children => [],
-    };
-
-    foreach my $datum ( @$data ) {
-        warn "got the path: $datum->{ $path_key }" if $DEBUG;
-        my @path = split $path_seperator, $datum->{ $path_key };
-
-        my $current = $root;
-        while ( my $part = shift @path ) {
-
-            if ( my $match = List::Util::first { $_->{node} eq $part } $current->{children}->@* ) {
-                warn "GOT MATCH: " . Data::Dumper::Dumper( $match ) if $DEBUG;
-                $current = $match;
-            }
-            else {
-                warn 'No current node, creating one!' if $DEBUG;
-                push $current->{children}->@* => $current = {
-                    node     => $part,
-                    children => []
-                };
-            }
-        }
-
-        $current->{meta} = $datum;
-    }
+    my $root = path_to_tree(
+        $data, (
+            path_key       => $path_key,
+            path_seperator => $path_seperator,
+        )
+    );
 
     print encode( $root );
 }
