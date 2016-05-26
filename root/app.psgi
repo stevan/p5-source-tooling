@@ -129,7 +129,7 @@ builder {
             return [ 400, [], [ 'You must specify either a function name' ]]
                 unless $args->{f};
 
-            my @cmd  = ($ENV{PERLDOC_BIN}, '-o', 'HTML', '-f', $args->{f});
+            my @cmd  = ($ENV{PERLDOC_BIN}, '-T', '-o', 'HTML', '-f', $args->{f});
             my @html = `@cmd`;
 
             return [ 200, [ 'Content-Type' => 'text/html' ], [ @html ]];
