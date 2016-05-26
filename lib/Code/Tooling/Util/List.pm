@@ -16,6 +16,9 @@ our @EXPORT_OK = qw[
 ];
 
 sub split_array_in_equal_groups ($array, $cnt_groups) {
+    return undef if( !defined($array) || ref $array ne 'ARRAY');
+    return undef if( !defined($cnt_groups) || $cnt_groups !~ /^\d+$/ || $cnt_groups<1 );
+
     my $array_groups = [];
     my @array_copy = $array->@*;
     my $min_seg_size = int( (@array_copy) / $cnt_groups );
