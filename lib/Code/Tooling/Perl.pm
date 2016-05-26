@@ -120,7 +120,7 @@ sub extract_module_info ($self, $source) {
             warn "Found version '$version' in '$current->{namespace}' in '$source'" if $DEBUG;
 
             # we've found it!!!!
-            $modules[-1]->{meta}->{version} = $version;
+            $modules[-1]->{version} = $version;
 
             undef $current;
         }
@@ -131,7 +131,7 @@ sub extract_module_info ($self, $source) {
                 namespace => $node->namespace,
                 line_num  => $node->line_number,
                 path      => $source->stringify,
-                meta      => {},
+                version   => undef,
             };
 
             push @modules => $current;
