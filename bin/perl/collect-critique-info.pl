@@ -34,7 +34,7 @@ sub main {
         'include=s'             => \$include,
         # development
         'verbose'               => \$DEBUG,
-        'parallel_process=i'    => \$num_processes,
+        'num_processes=i'       => \$num_processes,
     );
 
     (-e $ROOT && -d $ROOT)
@@ -46,7 +46,7 @@ sub main {
         && die 'You can not have both include and exclude patterns';
 
     (defined $num_processes && ($num_processes<=1 || $num_processes>10))
-        && die 'parallel_process has to be in the range [2,10]';
+        && die 'num_processes has to be in the range [2,10]';
 
     my (@files, @critiques);
 
