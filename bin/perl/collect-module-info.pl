@@ -14,73 +14,52 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use PPI;
-use MetaCPAN::Client;
-
 use Code::Tooling::Git;
 use Code::Tooling::Perl;
 
-use Importer 'Code::Tooling::Util::JSON'       => qw[ encode ];
+use Importer 'Code::Tooling::Util::JSON'       => qw[ encode decode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
 
 our $DEBUG = 0;
-our $ROOT;
 
 sub main {
 
-    my ($exclude, $include, $offline);
+    my ($checkout, $offline);
     Getopt::Long::GetOptions(
-        'root=s'    => \$ROOT,
-        # filters
-        'exclude=s' => \$exclude,
-        'include=s' => \$include,
-        # development
-        'offline'   => \$offline,
-        'verbose'   => \$DEBUG,
+        'checkout=s' => \$checkout,
+        'offline'    => \$offline,
+        'verbose'    => \$DEBUG,
     );
 
-    (-e $ROOT && -d $ROOT)
-        || die 'You must specifiy a valid root directory';
+    (-e $checkout && -d $checkout)
+        || die 'You must specifiy a valid checkout directory';
 
-    $ROOT = Path::Class::Dir->new( $ROOT );
-
-    (defined $include && defined $exclude)
-        && die 'You can not have both include and exclude patterns';
+    $checkout = Path::Class::Dir->new( $checkout );
 
     my $perl = Code::Tooling::Perl->new;
-    my $git  = Code::Tooling::Git->new( work_tree => $ROOT );
+    my $git  = Code::Tooling::Git->new( work_tree => $checkout );
 
-    my @modules;
+    my $input = join '' => <STDIN>;
+    my $data  = decode( $input );
 
-    # The data structure within @modules is
+    (ref $data eq 'ARRAY')
+        || die "Can only collate JSON arrays, not:\n$input";
+
+    # The input data structure (@modules) is
     # as follows:
     # {
     #     namespace : String,    # name of the package
     #     line_num  : Int,       # line number package began at
     #     path      : Str,       # path of the file package was in
     #     version   : VString    # value of $VERSION
-    #     cpan      : HashRef    # data from MetaCPAN
     # }
+    # and we add the `rel_path` to it to make
+    # it relevant to the checkout
 
-    # Step 1. - Traverse the file system and collect info about
-    #           modules and their version numbers
-    traverse_filesystem(
-        $ROOT,
-        sub ($source, $acc) {
-            push @$acc => map {
-                $_->{rel_path} = Path::Class::Dir
-                    ->new( $_->{path} )
-                    ->relative( $ROOT )
-                    ->stringify;
-                $_;
-            } $perl->extract_module_info( $source )->@*;
-        },
-        \@modules,
-        (
-            ($exclude ? (exclude => $exclude) : ()),
-            ($include ? (include => $include) : ()),
-        )
-    );
+    my @modules = map {
+        $_->{rel_path} = Path::Class::Dir->new( $_->{path} )->relative( $checkout )->stringify;
+        $_;
+    } @$data;
 
     # Step 2. - check if the file has been modified
     #           locally by git log
@@ -93,7 +72,7 @@ sub main {
 
         # Step 4. - Query MetaCPAN to get the module's source and
         #           see how much it differs from our source
-        check_file_changes_remotely( $perl, $ROOT, \@modules );
+        check_file_changes_remotely( $perl, $checkout, \@modules );
 
         # Step 5. - Query MetaCPAN to get the module author's information,
         #           source repository and bug tracker information
