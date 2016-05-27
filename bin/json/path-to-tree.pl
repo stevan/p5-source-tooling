@@ -8,19 +8,18 @@ use lib 'lib';
 use Getopt::Long ();
 
 use Importer 'Code::Tooling::Util::JSON'      => qw[ decode encode ];
-use Importer 'Code::Tooling::Util::Transform' => qw[ group_by ];
+use Importer 'Code::Tooling::Util::Transform' => qw[ path_to_tree ];
 
 our $DEBUG = 0;
 
 sub main {
 
-    my ($key);
+    my ($path_key, $path_seperator) = ('path', '/');
     Getopt::Long::GetOptions(
-        'key=s'   => \$key,
-        'verbose' => \$DEBUG
+        'path_key=s' => \$path_key,
+        'path_sep=s' => \$path_seperator,
+        'verbose'    => \$DEBUG
     );
-
-    ($key) || die 'Must provide a key to group-by';
 
     my $input = join '' => <STDIN>;
     my $data  = decode( $input );
@@ -28,13 +27,14 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my $output = group_by(
+    my $root = path_to_tree(
         $data, (
-            key => $key
+            path_key       => $path_key,
+            path_seperator => $path_seperator,
         )
     );
 
-    print encode( $output );
+    print encode( $root );
 }
 
 main && exit;

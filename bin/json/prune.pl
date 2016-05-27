@@ -1,13 +1,14 @@
 #!perl
 
-use strict;
+use v5.22;
 use warnings;
 
 use lib 'lib';
 
 use Getopt::Long ();
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::JSON'      => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::Transform' => qw[ prune ];
 
 our $DEBUG = 0;
 
@@ -33,22 +34,14 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my @output;
-    foreach my $datum ( @$data ) {
-        my %pruned;
+    my $output = prune(
+        $data, (
+            exclude => $exclude,
+            keys    => \@keys,
+        )
+    );
 
-        if ( $exclude ) {
-            %pruned = %$datum;
-            delete @pruned{ @keys };
-        }
-        else {
-            @pruned{ @keys } = @{$datum}{ @keys };
-        }
-
-        push @output => \%pruned;
-    }
-
-    print encode( \@output );
+    print encode( $output );
 }
 
 main && exit;

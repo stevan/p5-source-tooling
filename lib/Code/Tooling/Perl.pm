@@ -1,20 +1,60 @@
 package Code::Tooling::Perl;
 
-use v5.20;
+use v5.22;
 use warnings;
 use experimental 'signatures';
 
-use Perl::Critic;
+use Perl::Critic     ();
+use version          ();
+use Module::CoreList ();
+use Module::Runtime  ();
+
+use Code::Tooling::Perl::MetaCPAN;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
 
 sub new ($class, %args) {
-    return bless { %args } => $class;
+
+    $args{perl_version} = version->parse( $args{perl_version} )->numify
+        if $args{perl_version};
+
+    return bless {
+        _metacpan => Code::Tooling::Perl::MetaCPAN->new( @{ $args{metacpan_args} || [] } ),
+        # hash slices FTW
+        %args{qw[
+            perlcritic_profile
+            perl_version
+        ]},
+    } => $class;
 }
 
-# ...
+# metacpan
+
+sub metacpan { $_[0]->{_metacpan} }
+
+# general module stuff
+
+sub is_core_module ($self, $module) {
+    !! Module::CoreList::is_core( $module, undef, $self->{perl_version} || () );
+}
+
+sub is_module_deprecated ($self, $module) {
+    !! Module::CoreList::is_deprecated( $module, $self->{perl_version} || () );
+}
+
+sub classify_modules ($self, @modules) {
+    return [
+        map +{
+            is_core => ($self->is_core_module( $_ ) ? 1 : 0),
+            name    => $_,
+            path    => Module::Runtime::module_notional_filename( $_ ),
+        }, @modules
+    ];
+}
+
+## PPI related stuff
 
 sub extract_module_info ($self, $source) {
 
@@ -80,7 +120,7 @@ sub extract_module_info ($self, $source) {
             warn "Found version '$version' in '$current->{namespace}' in '$source'" if $DEBUG;
 
             # we've found it!!!!
-            $modules[-1]->{meta}->{version} = $version;
+            $modules[-1]->{version} = $version;
 
             undef $current;
         }
@@ -91,7 +131,7 @@ sub extract_module_info ($self, $source) {
                 namespace => $node->namespace,
                 line_num  => $node->line_number,
                 path      => $source->stringify,
-                meta      => {},
+                version   => undef,
             };
 
             push @modules => $current;
@@ -105,7 +145,12 @@ sub extract_module_info ($self, $source) {
     return \@modules;
 }
 
+# Perl::Critic oriented stuff
+
 sub critique ($self, $path, $query) {
+
+    ($self->{perlcritic_profile} && -f $self->{perlcritic_profile})
+        || die 'The Perl::Critic profile must be set to a valid file path before running the `critique` method';
 
     my $critic     = Perl::Critic->new( -profile => $self->{perlcritic_profile} );
     my @violations = $critic->critique( $path->stringify );

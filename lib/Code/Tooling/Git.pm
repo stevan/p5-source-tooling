@@ -1,6 +1,6 @@
 package Code::Tooling::Git;
 
-use v5.20;
+use v5.22;
 use warnings;
 use experimental 'signatures';
 

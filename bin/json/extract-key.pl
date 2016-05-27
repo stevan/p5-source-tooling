@@ -1,14 +1,14 @@
 #!perl
 
-use strict;
+use v5.22;
 use warnings;
 
 use lib 'lib';
 
 use Getopt::Long ();
-use List::Util 1.45 ();
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::JSON'      => qw[ decode encode ];
+use Importer 'Code::Tooling::Util::Transform' => qw[ extract_key ];
 
 our $DEBUG = 0;
 
@@ -45,31 +45,15 @@ sub main {
     (ref $data eq 'ARRAY')
         || die "Can only collate JSON arrays, not:\n$input";
 
-    my @output;
-    foreach my $datum ( @$data ) {
-        (exists $datum->{$key})
-            || die "Could not find key($key) in data(" . encode( $datum ) . ")";
+    my $output = extract_key(
+        $data, (
+            key => $key,
+            ($sort ? (sort => { ordering => $ordering, direction => $direction }) : ()),
+            ($uniq ? (uniq => 1) : ())
+        )
+    );
 
-        push @output => $datum->{$key};
-    }
-
-    if ( $sort ) {
-        @output = sort @output               if $ordering eq 'str';
-        @output = sort { $a <=> $b } @output if $ordering eq 'num';
-        @output = reverse @output            if $direction eq 'desc';
-    }
-
-    if ( $uniq ) {
-        if ( $ordering ) {
-            @output = List::Util::uniqstr( @output ) if $ordering eq 'str';
-            @output = List::Util::uniqnum( @output ) if $ordering eq 'num';
-        }
-        else {
-            @output = List::Util::uniq( @output );
-        }
-    }
-
-    print encode( \@output );
+    print encode( $output );
 }
 
 main && exit;

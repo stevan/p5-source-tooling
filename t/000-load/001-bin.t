@@ -14,9 +14,11 @@ is(system('perl', '-c', $_), 0, '... loaded ' . $_ . ' okay') foreach qw[
     bin/json/fmap.pl
     bin/json/group-by.pl
     bin/json/prune.pl
+    bin/json/path-to-tree.pl
 
     bin/perl/collect-module-info.pl
     bin/perl/collect-critique-info.pl
+    bin/perl/translate-module-info.pl
 ];
 
 done_testing;
