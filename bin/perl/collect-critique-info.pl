@@ -19,7 +19,7 @@ use Parallel::ForkManager;
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode decode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
-use Importer 'Code::Tooling::Util::List'       => qw[ split_array_equally ];
+use Importer 'Code::Tooling::Util::Transform'  => qw[ split_array_equally ];
 
 our $DEBUG = 0;
 our $ROOT;

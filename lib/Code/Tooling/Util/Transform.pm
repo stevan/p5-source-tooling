@@ -18,6 +18,7 @@ our @EXPORT_OK = qw[
     &group_by
     &path_to_tree
     &prune
+    &split_array_equally
 ];
 
 sub extract_key ($data, %opts) {
@@ -128,6 +129,19 @@ sub prune ($data, %opts) {
     }
 
     return \@output;
+}
+
+sub split_array_equally ($array, $cnt_groups) {
+    return undef if( !defined($array) || ref $array ne 'ARRAY');
+    return undef unless( $cnt_groups && $cnt_groups =~ /^\d+$/);
+
+    my $array_groups = [];
+    my @array_copy = $array->@*;
+    my $min_seg_size = int( (@array_copy) / $cnt_groups );
+    my $cnt_large_segs = (@array_copy) % $cnt_groups;
+    push $array_groups->@*, [ splice @array_copy, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
+    push $array_groups->@*, [ splice @array_copy, 0, $min_seg_size ] while @array_copy;
+    return $array_groups;
 }
 
 1;
