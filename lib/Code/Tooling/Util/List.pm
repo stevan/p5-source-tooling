@@ -18,7 +18,7 @@ our @EXPORT_OK = qw[
 
 sub split_array_equally ($array, $cnt_groups) {
     return undef if( !defined($array) || ref $array ne 'ARRAY');
-    return undef if( !defined($cnt_groups) || $cnt_groups !~ /^\d+$/ || $cnt_groups<1 );
+    return undef unless( $cnt_groups && $cnt_groups =~ /^\d+$/);
 
     my $array_groups = [];
     my @array_copy = $array->@*;
