@@ -132,16 +132,27 @@ sub prune ($data, %opts) {
 }
 
 sub split_array_equally ($array, $cnt_groups) {
-    return undef if( !defined($array) || ref $array ne 'ARRAY');
-    return undef unless( $cnt_groups && $cnt_groups =~ /^\d+$/);
+    die 'invalid first arg, expected array ref' if( !defined($array) || ref $array ne 'ARRAY');
+    die 'invalid second arg, expected positive integer' unless( $cnt_groups && $cnt_groups =~ /^\d+$/);
+    return [] if ($array->@*) == 0;
 
+    $cnt_groups = scalar( $array->@* ) if( $array->@* < $cnt_groups );
     my $array_groups = [];
-    my @array_copy = $array->@*;
-    my $min_seg_size = int( (@array_copy) / $cnt_groups );
-    my $cnt_large_segs = (@array_copy) % $cnt_groups;
-    push $array_groups->@*, [ splice @array_copy, 0, ($min_seg_size+1) ] while ( $cnt_large_segs-- > 0);
-    push $array_groups->@*, [ splice @array_copy, 0, $min_seg_size ] while @array_copy;
+    my $min_seg_size = int( ($array->@*) / $cnt_groups );
+    my $cnt_large_segs = ($array->@*) % $cnt_groups;
+    push $array_groups->@*, _make_n_arrays_of_size_k_from_offset($array, $cnt_large_segs, ( $min_seg_size + 1 ), 0)->@*;
+    push $array_groups->@*, _make_n_arrays_of_size_k_from_offset($array, $cnt_groups - $cnt_large_segs, ($min_seg_size), ($min_seg_size+1)*$cnt_large_segs)->@*;
     return $array_groups;
+}
+
+sub _make_n_arrays_of_size_k_from_offset ($array,$n,$k,$offset) {
+    my $arrays = [];
+    foreach ( 1..$n ) {
+        my $arr = [];
+        push $arr->@* , map { $array->[$offset++] } (1..$k);
+        push $arrays->@* , $arr;
+    }
+    return $arrays;
 }
 
 1;
