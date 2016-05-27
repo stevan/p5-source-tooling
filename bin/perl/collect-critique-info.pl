@@ -19,7 +19,7 @@ use Parallel::ForkManager;
 
 use Importer 'Code::Tooling::Util::JSON'       => qw[ encode decode ];
 use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
-use Importer 'Code::Tooling::Util::List'       => qw[ split_array_in_equal_groups ];
+use Importer 'Code::Tooling::Util::List'       => qw[ split_array_equally ];
 
 our $DEBUG = 0;
 our $ROOT;
@@ -152,7 +152,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
     );
 
     # divide files in groups to be processed by each process
-    my $files_groups = split_array_in_equal_groups($files, $num_processes);
+    my $files_groups = split_array_equally($files, $num_processes);
 
     # run all the process parallely to generate result
     my @temp_file_handlers;

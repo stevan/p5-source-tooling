@@ -12,10 +12,10 @@ our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
 
 our @EXPORT_OK = qw[
-    &split_array_in_equal_groups
+    &split_array_equally
 ];
 
-sub split_array_in_equal_groups ($array, $cnt_groups) {
+sub split_array_equally ($array, $cnt_groups) {
     return undef if( !defined($array) || ref $array ne 'ARRAY');
     return undef if( !defined($cnt_groups) || $cnt_groups !~ /^\d+$/ || $cnt_groups<1 );
 
