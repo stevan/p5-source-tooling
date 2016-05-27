@@ -7,7 +7,6 @@ use lib 'lib';
 
 use experimental qw[
     postderef
-    say
 ];
 
 use Data::Dumper ();
