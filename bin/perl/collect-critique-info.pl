@@ -160,7 +160,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
     # run all the process parallely to generate result
     my $temp_output_dir = Path::Class::tempdir(CLEANUP => 1);
     for my $cur_files ( $files_groups->@* ) {
-        my $temp_output_file = $temp_output_dir->tempfile();
+        my ($temp_output_file, $file_name) = $temp_output_dir->tempfile();
         my $pid = $pm->start(); # do the fork
         if ($pid == 0) {
             my @critiques;
