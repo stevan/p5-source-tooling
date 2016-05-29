@@ -26,7 +26,7 @@ our $ROOT;
 
 sub main {
 
-    my ($exclude, $include, $num_processes);
+    my ($exclude, $include, $critique_stats, $num_processes);
     Getopt::Long::GetOptions(
         'root=s'                => \$ROOT,
         # filters
@@ -34,6 +34,7 @@ sub main {
         'include=s'             => \$include,
         # development
         'verbose'               => \$DEBUG,
+        'critique_stats'        => \$critique_stats,
         'num_processes=i'       => \$num_processes,
     );
 
@@ -49,7 +50,6 @@ sub main {
         && die 'num_processes has to be in the range [1,50]';
 
     my (@files, @critiques);
-
     # The data structure within @critiques is
     # as follows:
     #  {
@@ -98,10 +98,13 @@ sub main {
     );
 
     # Step 2. - generate critique info serially/paralelly
+    my $critique_query = {
+        stats => $critique_stats
+    };
     if($num_processes) {
-        extract_critique_info_parallely( \@files, \@critiques, $num_processes );
+        extract_critique_info_parallely( \@files, $critique_query, \@critiques, $num_processes );
     } else {
-        extract_critique_info_serially( \@files, \@critiques );
+        extract_critique_info_serially( \@files, $critique_query, \@critiques );
     }
 
     # Step 3. - Prepare (machine readable) report of status of critiques
@@ -115,7 +118,7 @@ sub extract_file_names ($source, $files) {
     return;
 }
 
-sub extract_critique_info_serially ($files, $critiques) {
+sub extract_critique_info_serially ($files, $critique_query, $critiques) {
     my $perl = Code::Tooling::Perl->new(
         perlcritic_profile => $ENV{CRITIC_PROFILE},
         perl_version       => $ENV{PERL_VERSION},
@@ -123,7 +126,7 @@ sub extract_critique_info_serially ($files, $critiques) {
     for my $file ( $files->@* ) {
         eval {
             my $critique_hash = {};
-            $critique_hash->{critique} = $perl->critique( $file,{} );
+            $critique_hash->{critique} = $perl->critique( $file, $critique_query );
             $critique_hash->{file_name} = $file->stringify;
             warn "Succesfully fetched critique info about $file" if $DEBUG;
             push $critiques->@*, $critique_hash;
@@ -134,25 +137,8 @@ sub extract_critique_info_serially ($files, $critiques) {
     }
 }
 
-sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) {
+sub extract_critique_info_parallely ($files, $critique_query, $merged_critiques, $num_processes) {
     my $pm = Parallel::ForkManager->new($num_processes);
-
-    $pm->run_on_finish( sub {
-        my ($pid, $exit_code, $ident) = @_;
-        print "** $ident just got out of the pool ".
-        "with PID $pid and exit code: $exit_code\n" if $DEBUG;
-    });
-
-    $pm->run_on_start( sub {
-        my ($pid, $ident)=@_;
-        print "** $ident started, pid: $pid\n" if $DEBUG;
-    });
-
-    $pm->run_on_wait( sub {
-            print "** waiting for children ...\n" if $DEBUG;
-        },
-        60
-    );
 
     # divide files in groups to be processed by each process
     my $files_groups = split_array_equally($files, $num_processes);
@@ -164,7 +150,8 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
         my $pid = $pm->start(); # do the fork
         if ($pid == 0) {
             my @critiques;
-            extract_critique_info_serially( $cur_files, \@critiques );
+            extract_critique_info_serially( $cur_files, $critique_query, \@critiques );
+            #print encode( \@critiques );
             $temp_output_file->write( encode( \@critiques ) );
             $pm->finish;
         }
@@ -173,6 +160,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
 
     # merge all the temp files inside the temp dir
     for my $temp_fh ( $temp_output_dir->children() ) {
+        say "all the children!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
         my $content = $temp_fh->slurp;
         my $critiques = decode($content);
         push $merged_critiques->@*, $critiques->@*;

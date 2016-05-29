@@ -154,10 +154,10 @@ sub critique ($self, $path, $query) {
 
     my $critic     = Perl::Critic->new( -profile => $self->{perlcritic_profile} );
     my @violations = $critic->critique( $path->stringify );
-    my $statistics = $critic->statistics;
+    my $statistics = defined($query) && $query->{stats} ? $critic->statistics : undef;
 
     return {
-        statistics => {
+        $statistics ? ( statistics => {
             modules    => $statistics->modules,
             subs       => $statistics->subs,
             statements => $statistics->statements,
@@ -172,7 +172,7 @@ sub critique ($self, $path, $query) {
                 perl     => $statistics->lines_of_perl,
                 pod      => $statistics->lines_of_pod,
             },
-        },
+        }) : (),
         violations => [
             map +{
                 severity    => $_->severity,
