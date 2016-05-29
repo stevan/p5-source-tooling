@@ -158,24 +158,22 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
     my $files_groups = split_array_equally($files, $num_processes);
 
     # run all the process parallely to generate result
-    my @temp_file_handlers;
+    my $temp_dir = Path::Class::tempdir(CLEANUP => 1);
     for my $cur_files ( $files_groups->@* ) {
-        my $output_file = File::Temp->new();
-        push @temp_file_handlers, $output_file;
-        my $pid = $pm->start; # do the fork
+        my ($temp_output_file,$name) = $temp_dir->tempfile();
+        my $pid = $pm->start(); # do the fork
         if ($pid == 0) {
             my @critiques;
             extract_critique_info_serially( $cur_files, \@critiques );
-            $output_file->write( encode( \@critiques ) );
+            $temp_output_file->write( encode( \@critiques ) );
             $pm->finish;
         }
     }
     $pm->wait_all_children;
-
-    # merge all the temp files
-    for my $temp_fh ( @temp_file_handlers ) {
-        $temp_fh->seek(0, 0);
-        my $content = join '' => <$temp_fh>;
+    
+    # merge all the temp files inside the temp dir
+    for my $temp_fh ( $temp_dir->children() ) {
+        my $content = $temp_fh->slurp;
         my $critiques = decode($content);
         push $merged_critiques->@*, $critiques->@*;
     }
