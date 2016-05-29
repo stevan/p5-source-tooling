@@ -45,8 +45,8 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    (defined $num_processes && ($num_processes<=1 || $num_processes>10))
-        && die 'num_processes has to be in the range [2,10]';
+    (defined $num_processes && ($num_processes<1 || $num_processes>50))
+        && die 'num_processes has to be in the range [1,10]';
 
     my (@files, @critiques);
 
@@ -170,7 +170,7 @@ sub extract_critique_info_parallely ($files, $merged_critiques, $num_processes) 
         }
     }
     $pm->wait_all_children;
-    
+
     # merge all the temp files inside the temp dir
     for my $temp_fh ( $temp_dir->children() ) {
         my $content = $temp_fh->slurp;
