@@ -46,7 +46,7 @@ sub main {
         && die 'You can not have both include and exclude patterns';
 
     (defined $num_processes && ($num_processes<1 || $num_processes>50))
-        && die 'num_processes has to be in the range [1,10]';
+        && die 'num_processes has to be in the range [1,50]';
 
     my (@files, @critiques);
 
