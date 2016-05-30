@@ -114,7 +114,7 @@ sub main {
 main && exit;
 
 sub extract_file_names ($source, $files) {
-    push @$files , $source if $source->stringify =~ /\.p[ml]$/ ;
+    push @$files , $source if $source->stringify() =~ /\.p[ml]$/ ;
     return;
 }
 
@@ -127,7 +127,7 @@ sub extract_critique_info_serially ($files, $critique_query, $critiques) {
         eval {
             my $critique_hash = {};
             $critique_hash->{critique} = $perl->critique( $file, $critique_query );
-            $critique_hash->{file_name} = $file->stringify;
+            $critique_hash->{file_name} = $file->stringify();
             warn "Succesfully fetched critique info about $file" if $DEBUG;
             push $critiques->@*, $critique_hash;
             1;
@@ -152,14 +152,14 @@ sub extract_critique_info_parallely ($files, $critique_query, $merged_critiques,
             my @critiques;
             extract_critique_info_serially( $cur_files, $critique_query, \@critiques );
             $temp_output_file->write( encode( \@critiques ) );
-            $pm->finish;
+            $pm->finish();
         }
     }
-    $pm->wait_all_children;
+    $pm->wait_all_children();
 
     # merge all the temp files inside the temp dir
     for my $temp_fh ( $temp_output_dir->children() ) {
-        my $content = $temp_fh->slurp;
+        my $content = $temp_fh->slurp();
         my $critiques = decode($content);
         push $merged_critiques->@*, $critiques->@*;
     }
