@@ -151,7 +151,6 @@ sub extract_critique_info_parallely ($files, $critique_query, $merged_critiques,
         if ($pid == 0) {
             my @critiques;
             extract_critique_info_serially( $cur_files, $critique_query, \@critiques );
-            #print encode( \@critiques );
             $temp_output_file->write( encode( \@critiques ) );
             $pm->finish;
         }
@@ -160,7 +159,6 @@ sub extract_critique_info_parallely ($files, $critique_query, $merged_critiques,
 
     # merge all the temp files inside the temp dir
     for my $temp_fh ( $temp_output_dir->children() ) {
-        say "all the children!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
         my $content = $temp_fh->slurp;
         my $critiques = decode($content);
         push $merged_critiques->@*, $critiques->@*;
