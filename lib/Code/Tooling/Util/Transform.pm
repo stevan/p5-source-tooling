@@ -18,6 +18,7 @@ our @EXPORT_OK = qw[
     &group_by
     &path_to_tree
     &prune
+    &split_array_equally
 ];
 
 sub extract_key ($data, %opts) {
@@ -128,6 +129,30 @@ sub prune ($data, %opts) {
     }
 
     return \@output;
+}
+
+sub split_array_equally ($array, $cnt_groups) {
+    die 'invalid first arg, expected array ref' if( !defined($array) || ref $array ne 'ARRAY');
+    die 'invalid second arg, expected positive integer' unless( $cnt_groups && $cnt_groups =~ /^\d+$/);
+    return [] if ($array->@*) == 0;
+
+    $cnt_groups = scalar( $array->@* ) if( $array->@* < $cnt_groups );
+    my $array_groups = [];
+    my $min_seg_size = int( ($array->@*) / $cnt_groups );
+    my $cnt_large_segs = ($array->@*) % $cnt_groups;
+    push $array_groups->@*, _make_n_arrays_of_size_k_from_offset($array, $cnt_large_segs, ( $min_seg_size + 1 ), 0)->@*;
+    push $array_groups->@*, _make_n_arrays_of_size_k_from_offset($array, $cnt_groups - $cnt_large_segs, ($min_seg_size), ($min_seg_size+1)*$cnt_large_segs)->@*;
+    return $array_groups;
+}
+
+sub _make_n_arrays_of_size_k_from_offset ($array,$n,$k,$offset) {
+    my $arrays = [];
+    foreach ( 1..$n ) {
+        my $arr = [];
+        push $arr->@* , map { $array->[$offset++] } (1..$k);
+        push $arrays->@* , $arr;
+    }
+    return $arrays;
 }
 
 1;
