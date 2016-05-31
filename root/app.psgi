@@ -218,6 +218,20 @@ builder {
             ];
         };
 
+        mount '/grep/' => sub {
+            my $r         = Plack::Request->new( $_[0] );
+            my ($pattern) = grep $_, split /\// => $r->path;
+
+            return [ 400, [], [ "The <git grep> command requires a pattern to search with\n" ]]
+                unless $pattern;
+
+            return [
+                200,
+                [ 'Content-Type' => 'application/json' ],
+                [ encode( $GIT->grep( $pattern, $r->query_parameters ) ) ]
+            ];
+        };
+
         mount '/' => sub {
             return [
                 400,
