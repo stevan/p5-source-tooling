@@ -2,7 +2,10 @@ package Code::Tooling::Perl;
 
 use v5.22;
 use warnings;
-use experimental 'signatures';
+use experimental qw[
+    signatures
+    lexical_subs
+];
 
 use Perl::Critic     ();
 use version          ();
@@ -63,6 +66,67 @@ sub extract_module_info ($self, $source) {
     (defined $doc)
         || die 'Could not load document: ' . $source->stringify;
 
+    # TODO:
+    # This whole method is in desperate need of a re-write.
+    # It was copy/pasted togehter from a couple of sources
+    # and I never really took the time to understand it. I
+    # am now convinced that it is the wrong approach, but
+    # until I write an actual test suite, I won't be sure.
+    # - SL
+
+    my sub find_variable ($current, $node, $var_name) {
+        # Must be a quote or number
+        $node->isa('PPI::Token::Quote')          or
+        $node->isa('PPI::Token::Number')         or return;
+
+        # To the right is a statement terminator or nothing
+        my $t = $node->snext_sibling;
+        if ( $t ) {
+            $t->isa('PPI::Token::Structure') or return;
+            $t->content eq ';'               or return;
+        }
+
+        # To the left is an equals sign
+        my $eq = $node->sprevious_sibling        or return;
+        $eq->isa('PPI::Token::Operator')         or return;
+        $eq->content eq '='                      or return;
+
+        # To the left is a $var_name symbol (VERSION, AUTHORITY, etc)
+        my $v = $eq->sprevious_sibling           or return;
+        $v->isa('PPI::Token::Symbol')            or return;
+        $v->content =~ m/^\$(?:\w+::)*${var_name}$/  or return;
+
+        # To the left is either nothing or "our"
+        my $o = $v->sprevious_sibling;
+        if ( $o ) {
+            $o->content eq 'our'             or return;
+            $o->sprevious_sibling           and return;
+        }
+
+        warn "Found possible $var_name in '$current->{namespace}' in '$source'" if $DEBUG;
+
+        my $value;
+        if ( $node->isa('PPI::Token::Quote') ) {
+            if ( $node->can('literal') ) {
+                $value = $node->literal;
+            } else {
+                $value = $node->string;
+            }
+        } elsif ( $node->isa('PPI::Token::Number') ) {
+            if ( $node->can('literal') ) {
+                $value = $node->literal;
+            } else {
+                $value = $node->content;
+            }
+        } else {
+            die 'Unsupported object ' . ref($node);
+        }
+
+        warn "Found version '$value' in '$current->{namespace}' in '$source'" if $DEBUG;
+
+        return $value;
+    }
+
     my ($current, @modules);
     $doc->find(sub {
         my ($root, $node) = @_;
@@ -70,57 +134,10 @@ sub extract_module_info ($self, $source) {
         # if we have a current namespace, descend to find version ...
         if ( $current ) {
 
-            # Must be a quote or number
-            $node->isa('PPI::Token::Quote')          or
-            $node->isa('PPI::Token::Number')         or return '';
+            $modules[-1]->{VERSION}   ||= find_variable( $current, $node, 'VERSION' );
+            $modules[-1]->{AUTHORITY} ||= find_variable( $current, $node, 'AUTHORITY' );
 
-            # To the right is a statement terminator or nothing
-            my $t = $node->snext_sibling;
-            if ( $t ) {
-                $t->isa('PPI::Token::Structure') or return '';
-                $t->content eq ';'               or return '';
-            }
-
-            # To the left is an equals sign
-            my $eq = $node->sprevious_sibling        or return '';
-            $eq->isa('PPI::Token::Operator')         or return '';
-            $eq->content eq '='                      or return '';
-
-            # To the left is a $VERSION symbol
-            my $v = $eq->sprevious_sibling           or return '';
-            $v->isa('PPI::Token::Symbol')            or return '';
-            $v->content =~ m/^\$(?:\w+::)*VERSION$/  or return '';
-
-            # To the left is either nothing or "our"
-            my $o = $v->sprevious_sibling;
-            if ( $o ) {
-                $o->content eq 'our'             or return '';
-                $o->sprevious_sibling           and return '';
-            }
-
-            warn "Found possible version in '$current->{namespace}' in '$source'" if $DEBUG;
-
-            my $version;
-            if ( $node->isa('PPI::Token::Quote') ) {
-                if ( $node->can('literal') ) {
-                    $version = $node->literal;
-                } else {
-                    $version = $node->string;
-                }
-            } elsif ( $node->isa('PPI::Token::Number') ) {
-                if ( $node->can('literal') ) {
-                    $version = $node->literal;
-                } else {
-                    $version = $node->content;
-                }
-            } else {
-                die 'Unsupported object ' . ref($node);
-            }
-
-            warn "Found version '$version' in '$current->{namespace}' in '$source'" if $DEBUG;
-
-            # we've found it!!!!
-            $modules[-1]->{version} = $version;
+            return '' unless $modules[-1]->{VERSION} && $modules[-1]->{AUTHORITY};
 
             undef $current;
         }
@@ -131,7 +148,8 @@ sub extract_module_info ($self, $source) {
                 namespace => $node->namespace,
                 line_num  => $node->line_number,
                 path      => $source->stringify,
-                version   => undef,
+                VERSION   => undef,
+                AUTHORITY => undef,
             };
 
             push @modules => $current;
