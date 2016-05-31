@@ -2,7 +2,10 @@
 
 use v5.22;
 use warnings;
-use experimental 'current_sub'; # recursion ;)
+use experimental qw[
+    current_sub
+    postderef
+];
 
 use lib 'lib';
 
