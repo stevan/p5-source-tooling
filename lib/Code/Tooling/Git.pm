@@ -2,7 +2,10 @@ package Code::Tooling::Git;
 
 use v5.22;
 use warnings;
-use experimental 'signatures';
+use experimental qw[
+    signatures
+    postderef
+];
 
 use Git::Repository;
 
@@ -17,6 +20,40 @@ sub new ($class, %args) {
 }
 
 # ...
+
+sub grep ($self, $pattern, $query) {
+    my $cmd = $self->{repo}->command(
+        grep => (
+            '--break',
+            '--heading',
+            '--line-number',
+        ) => $pattern
+    );
+    warn '[' . (join ' ' => $cmd->cmdline) . ']' if $query->{debug};
+    my @all = $cmd->final_output;
+
+    warn join "\n" => @all if $query->{debug};
+
+    my @files;
+
+    my $current;
+    while ( @all ) {
+        $current = {
+            path    => (shift @all), # first file name
+            matches => [],
+        };
+        while ( my $match = shift @all ) {
+            my ($line_num, $line) = ($match =~ /^(\d+)\:(.*)$/);
+            push $current->{matches}->@* => {
+                line_num => $line_num,
+                line     => $line,
+            };
+        }
+        push @files => $current;
+    }
+
+    return \@files;
+}
 
 sub show ($self, $sha, $query) {
 

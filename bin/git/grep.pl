@@ -17,11 +17,13 @@ our $DEBUG = 0;
 
 sub main {
 
-    my ($checkout, $pattern);
+    my ($checkout, $pattern, $ignore_case, $invert);
     Getopt::Long::GetOptions(
-        'checkout=s' => \$checkout,
-        'pattern=s'  => \$pattern,
-        'verbose'    => \$DEBUG,
+        'checkout=s'  => \$checkout,
+        # search
+        'pattern=s'   => \$pattern,
+        # debug
+        'verbose'     => \$DEBUG,
     );
 
     $checkout ||= $ENV{CHECKOUT} ||= '.';;
@@ -31,9 +33,16 @@ sub main {
 
     $checkout = Path::Class::Dir->new( $checkout );
 
-    # run git blame over a single repo
+    my $results = Code::Tooling::Git->new(
+        work_tree => $checkout
+    )->grep(
+        $pattern,
+        {
+            debug => $DEBUG
+        }
+    );
 
-    print encode( ??? );
+    print encode( $results );
 }
 
 main && exit;
