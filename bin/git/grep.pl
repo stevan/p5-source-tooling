@@ -26,7 +26,7 @@ sub main {
         'verbose'     => \$DEBUG,
     );
 
-    $checkout ||= $ENV{CHECKOUT} ||= '.';;
+    $checkout ||= $ENV{CHECKOUT} ||= '.';
 
     (-e $checkout && -d $checkout)
         || die 'You must specifiy a valid checkout directory';
