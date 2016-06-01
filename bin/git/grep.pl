@@ -17,7 +17,7 @@ our $DEBUG = 0;
 
 sub main {
 
-    my ($checkout, $pattern, $ignore_case, $invert);
+    my ($checkout, $pattern);
     Getopt::Long::GetOptions(
         'checkout=s'  => \$checkout,
         # search
