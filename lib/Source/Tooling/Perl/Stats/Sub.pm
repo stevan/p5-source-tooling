@@ -14,6 +14,10 @@ sub new ($class, $e) {
     } => $class;
 }
 
+sub name ($self) {
+    $self->{_ppi}->name
+}
+
 1;
 
 __END__

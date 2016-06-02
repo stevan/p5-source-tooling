@@ -10,20 +10,21 @@ use experimental qw[
 use PPI;
 use PPI::Document;
 
+use Source::Tooling::Perl::Stats::Package;
+use Source::Tooling::Perl::Stats::Sub;
+use Source::Tooling::Perl::Stats::Var;
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
 
-sub new ($class, $path) {
+sub new ($class, @args) {
 
-    (-e $path)
-        || die 'You must pass a valid path, could not locate (' . $path . ')';
+    my $e = PPI::Document->new( @args )
+        or die 'Unable to parse (' . (join ', ' => @args) . ')';
 
-    my $doc = PPI::Document->new( $path )
-        or die 'Unable to parse file (' . $path . ')';
-
-    my $ppi_packages = $doc->find('PPI::Statement::Package');
-    my $ppi_subs     = $doc->find('PPI::Statement::Sub');
+    my $ppi_packages = $e->find('PPI::Statement::Package');
+    my $ppi_subs     = $e->find('PPI::Statement::Sub');
 
     my (@packages, @subs);
 
@@ -34,11 +35,14 @@ sub new ($class, $path) {
         if ref $ppi_subs;
 
     return bless {
-        _ppi      => $doc,
+        _ppi      => $e,
         _packages => \@packages,
         _subs     => \@subs,
     } => $class;
 }
+
+sub packages ($self) { $self->{_packages}->@* }
+sub subs     ($self) { $self->{_subs}->@*     }
 
 1;
 
