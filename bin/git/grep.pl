@@ -9,9 +9,9 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Code::Tooling::Git;
+use Source::Tooling::Git;
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ encode ];
+use Importer 'Source::Tooling::Util::JSON' => qw[ encode ];
 
 our $DEBUG = 0;
 
@@ -33,7 +33,7 @@ sub main {
 
     $checkout = Path::Class::Dir->new( $checkout );
 
-    my $results = Code::Tooling::Git->new(
+    my $results = Source::Tooling::Git->new(
         work_tree => $checkout
     )->grep(
         $pattern,

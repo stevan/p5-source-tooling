@@ -1,4 +1,4 @@
-package Code::Tooling::Perl::MetaCPAN;
+package Source::Tooling::Perl::MetaCPAN;
 
 use v5.22;
 use warnings;

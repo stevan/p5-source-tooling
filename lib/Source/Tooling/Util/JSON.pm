@@ -1,4 +1,4 @@
-package Code::Tooling::Util::JSON;
+package Source::Tooling::Util::JSON;
 
 use v5.22;
 use warnings;

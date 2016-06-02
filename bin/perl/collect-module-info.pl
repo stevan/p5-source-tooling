@@ -14,11 +14,11 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Code::Tooling::Git;
-use Code::Tooling::Perl;
+use Source::Tooling::Git;
+use Source::Tooling::Perl;
 
-use Importer 'Code::Tooling::Util::JSON'       => qw[ encode decode ];
-use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
+use Importer 'Source::Tooling::Util::JSON'       => qw[ encode decode ];
+use Importer 'Source::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
 
 our $DEBUG = 0;
 
@@ -36,8 +36,8 @@ sub main {
 
     $checkout = Path::Class::Dir->new( $checkout );
 
-    my $perl = Code::Tooling::Perl->new;
-    my $git  = Code::Tooling::Git->new( work_tree => $checkout );
+    my $perl = Source::Tooling::Perl->new;
+    my $git  = Source::Tooling::Git->new( work_tree => $checkout );
 
     my $input = join '' => <STDIN>;
     my $data  = decode( $input );

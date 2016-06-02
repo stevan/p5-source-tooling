@@ -14,10 +14,10 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Code::Tooling::Perl;
+use Source::Tooling::Perl;
 
-use Importer 'Code::Tooling::Util::JSON'       => qw[ encode ];
-use Importer 'Code::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
+use Importer 'Source::Tooling::Util::JSON'       => qw[ encode ];
+use Importer 'Source::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
 
 our $DEBUG = 0;
 our $ROOT;
@@ -42,7 +42,7 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    my $perl = Code::Tooling::Perl->new;
+    my $perl = Source::Tooling::Perl->new;
 
     # The data structure within @modules is
     # as follows:

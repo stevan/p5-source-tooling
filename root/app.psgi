@@ -11,10 +11,10 @@ use Plack::Builder;
 
 use Path::Class ();
 
-use Code::Tooling::Perl;
-use Code::Tooling::Git;
+use Source::Tooling::Perl;
+use Source::Tooling::Git;
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ encode ];
+use Importer 'Source::Tooling::Util::JSON' => qw[ encode ];
 
 # Constants
 
@@ -34,11 +34,11 @@ $ENV{PERLDOC_BIN}    ||= 'perldoc';
 my $CHECKOUT = Path::Class::Dir->new( $ENV{CHECKOUT} );
 my $PERL_LIB = $CHECKOUT->subdir( $ENV{PERL_LIB_ROOT} );
 
-my $GIT = Code::Tooling::Git->new(
+my $GIT = Source::Tooling::Git->new(
     work_tree => $CHECKOUT
 );
 
-my $PERL = Code::Tooling::Perl->new(
+my $PERL = Source::Tooling::Perl->new(
     perlcritic_profile => $ENV{CRITIC_PROFILE},
     perl_version       => $ENV{PERL_VERSION},
 );

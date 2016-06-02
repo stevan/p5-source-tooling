@@ -9,9 +9,9 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Code::Tooling::Git;
+use Source::Tooling::Git;
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ encode ];
+use Importer 'Source::Tooling::Util::JSON' => qw[ encode ];
 
 our $DEBUG = 0;
 
@@ -29,7 +29,7 @@ sub main {
     (-e $checkout && -d $checkout)
         || die 'You must specifiy a valid checkout directory';
 
-    my $log = Code::Tooling::Git->new(
+    my $log = Source::Tooling::Git->new(
         work_tree => $checkout
     )->show(
         $sha,

@@ -1,4 +1,4 @@
-package Code::Tooling::Perl;
+package Source::Tooling::Perl;
 
 use v5.22;
 use warnings;
@@ -12,7 +12,7 @@ use version          ();
 use Module::CoreList ();
 use Module::Runtime  ();
 
-use Code::Tooling::Perl::MetaCPAN;
+use Source::Tooling::Perl::MetaCPAN;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -24,7 +24,7 @@ sub new ($class, %args) {
         if $args{perl_version};
 
     return bless {
-        _metacpan => Code::Tooling::Perl::MetaCPAN->new( @{ $args{metacpan_args} || [] } ),
+        _metacpan => Source::Tooling::Perl::MetaCPAN->new( @{ $args{metacpan_args} || [] } ),
         # hash slices FTW
         %args{qw[
             perlcritic_profile

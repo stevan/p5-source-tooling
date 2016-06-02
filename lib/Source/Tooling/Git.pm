@@ -1,4 +1,4 @@
-package Code::Tooling::Git;
+package Source::Tooling::Git;
 
 use v5.22;
 use warnings;

@@ -7,8 +7,8 @@ use lib 'lib';
 
 use Getopt::Long ();
 
-use Importer 'Code::Tooling::Util::JSON'      => qw[ decode encode ];
-use Importer 'Code::Tooling::Util::Transform' => qw[ prune ];
+use Importer 'Source::Tooling::Util::JSON'      => qw[ decode encode ];
+use Importer 'Source::Tooling::Util::Transform' => qw[ prune ];
 
 our $DEBUG = 0;
 

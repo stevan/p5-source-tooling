@@ -6,12 +6,12 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    use_ok('Code::Tooling::Git');
-    use_ok('Code::Tooling::Perl');
+    use_ok('Source::Tooling::Git');
+    use_ok('Source::Tooling::Perl');
 
-    use_ok('Code::Tooling::Util::JSON');
-    use_ok('Code::Tooling::Util::FileSystem');
-    use_ok('Code::Tooling::Util::Transform');
+    use_ok('Source::Tooling::Util::JSON');
+    use_ok('Source::Tooling::Util::FileSystem');
+    use_ok('Source::Tooling::Util::Transform');
 }
 
 done_testing;

@@ -13,7 +13,7 @@ use experimental qw[
 use Data::Dumper ();
 use Path::Class  ();
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ decode ];
+use Importer 'Source::Tooling::Util::JSON' => qw[ decode ];
 
 sub main {
     my $content = join '' => <STDIN>;

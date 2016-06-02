@@ -9,7 +9,7 @@ use Getopt::Long ();
 use Data::Dumper ();
 use IPC::Run     ();
 
-use Importer 'Code::Tooling::Util::JSON' => qw[ decode encode ];
+use Importer 'Source::Tooling::Util::JSON' => qw[ decode encode ];
 
 our $DEBUG = 0;
 
