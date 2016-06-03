@@ -16,7 +16,10 @@ use Source::Tooling::Perl::Stats::Package;
 use Source::Tooling::Perl::Stats::Sub;
 use Source::Tooling::Perl::Stats::Var;
 
-use Importer 'Source::Tooling::Util::PPI' => qw[ extract_symbols_and_values_from_variable ];
+use Importer 'Source::Tooling::Util::PPI' => qw[
+    extract_symbols_and_values_from_variable
+    extract_sensible_value
+];
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -45,7 +48,7 @@ sub new ($class, @args) {
                 foreach my $i ( 0 .. $symbols->$#* ) {
                     push @vars => Source::Tooling::Perl::Stats::Var->new(
                         $symbols->[$i]->symbol,
-                        ($values->[$i] ? $values->[$i]->content : undef)
+                        ($values->[$i] ? extract_sensible_value( $values->[$i] ) : undef)
                     );
                 }
             }

@@ -12,7 +12,10 @@ use Scalar::Util ();
 use Source::Tooling::Perl::Stats::Sub;
 use Source::Tooling::Perl::Stats::Var;
 
-use Importer 'Source::Tooling::Util::PPI' => qw[ extract_symbols_and_values_from_variable ];
+use Importer 'Source::Tooling::Util::PPI' => qw[
+    extract_symbols_and_values_from_variable
+    extract_sensible_value
+];
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -35,12 +38,17 @@ sub new ($class, $pkg) {
             elsif ( $node->isa('PPI::Statement::Variable') && $node->type eq 'our' ) {
                 my ($symbols, $values) = extract_symbols_and_values_from_variable( $node );
 
+                #use Data::Dumper;
+                #warn Dumper [ $symbols, $values ];
+
+                #eval {
                 foreach my $i ( 0 .. $symbols->$#* ) {
                     push @vars => Source::Tooling::Perl::Stats::Var->new(
                         $symbols->[$i]->symbol,
-                        ($values->[$i] ? $values->[$i]->content : undef)
+                        ($values->[$i] ? extract_sensible_value( $values->[$i] ) : undef)
                     );
                 }
+                #}; warn $@ if $@;
             }
             elsif ( $node->isa('PPI::Statement') ) {
                 my $sym = $node->schild(0);
@@ -65,7 +73,7 @@ sub new ($class, $pkg) {
                 # if we got here, it is an implicit global
                 push @vars => Source::Tooling::Perl::Stats::Var->new(
                     $sym->symbol,
-                    ($value ? $value->content : undef)
+                    ($value ? extract_sensible_value( $value ) : undef)
                 );
             }
 

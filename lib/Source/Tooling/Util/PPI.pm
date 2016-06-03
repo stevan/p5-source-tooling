@@ -12,7 +12,31 @@ our $DEBUG     = 0;
 
 our @EXPORT_OK = qw[
     &extract_symbols_and_values_from_variable
+    &extract_sensible_value
 ];
+
+sub extract_sensible_value ($node) {
+
+    my $value;
+
+    if ( $node->isa('PPI::Token::Quote') ) {
+        if ( $node->can('literal') ) {
+            $value = $node->literal;
+        } else {
+            $value = $node->string;
+        }
+    } elsif ( $node->isa('PPI::Token::Number') ) {
+        if ( $node->can('literal') ) {
+            $value = $node->literal;
+        } else {
+            $value = $node->content;
+        }
+    } else {
+        $value = $node->content;
+    }
+
+    return $value;
+}
 
 sub extract_symbols_and_values_from_variable ($node) {
 
