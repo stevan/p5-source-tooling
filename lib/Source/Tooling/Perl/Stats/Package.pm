@@ -105,6 +105,12 @@ sub version ($self) {
     }
     return undef;
 }
+
+sub authority ($self) {
+    foreach my $var ( $self->vars ) {
+        return $var if $var->symbol_contains('AUTHORITY');
+    }
+    return undef;
 }
 
 1;

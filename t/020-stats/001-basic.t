@@ -21,6 +21,7 @@ subtest '... basic package test' => sub {
 
         package Bar {
             our $VERSION = '0.01';
+            our $AUTHORITY = 'cpan:STEVAN';
         };
 
         package Foo::Bar {
@@ -34,23 +35,49 @@ subtest '... basic package test' => sub {
 
     #diag $f->ppi_dump;
 
+    my @packages = $f->packages;
+
     is_deeply(
         [qw[ Foo Bar Foo::Bar ]],
-        [ map { $_->name } $f->packages ],
+        [ map { $_->name } @packages ],
         '... got the packages we expected'
     );
 
     is_deeply(
-        [ undef, q['0.01'], undef ],
-        [ map { $_->version ? $_->version->value : undef } $f->packages ],
-        '... got the package version we expected'
-    );
-
-    is_deeply(
-        [ 1, 3, 3 ],
-        [ map { $_->line_count } $f->packages ],
+        [ 1, 4, 3 ],
+        [ map { $_->line_count } @packages ],
         '... got the package line counts we expected'
     );
+
+    subtest '... check out version/authority stuff' => sub {
+        my $Bar = $packages[1];
+        is($Bar->name, 'Bar', '... got the expected package');
+
+        #warn Dumper $Bar;
+
+        is_deeply(
+            [qw[ $VERSION $AUTHORITY ]],
+            [ map { $_->symbol } $Bar->vars ],
+            '... got the vars we expected'
+        );
+
+
+        is_deeply(
+            [ '0.01', 'cpan:STEVAN' ],
+            [ map { $_->value } $Bar->vars ],
+            '... got the vars we expected'
+        );
+
+        my $v = $Bar->version;
+        isa_ok($v, 'Source::Tooling::Perl::Stats::Var');
+        is($v->symbol, '$VERSION', '... got the version we expected');
+        is($v->value, '0.01', '... got the version we expected');
+
+        my $a = $Bar->authority;
+        isa_ok($a, 'Source::Tooling::Perl::Stats::Var');
+        is($a->symbol, '$AUTHORITY', '... got the version we expected');
+        is($a->value, 'cpan:STEVAN', '... got the version we expected');
+    };
 
 };
 
@@ -160,6 +187,5 @@ subtest '... basic variable test' => sub {
     };
 
 };
-
 
 done_testing;
