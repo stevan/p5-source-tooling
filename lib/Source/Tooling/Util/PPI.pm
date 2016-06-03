@@ -16,6 +16,10 @@ our @EXPORT_OK = qw[
 
 sub extract_symbols_and_values_from_variable ($node) {
 
+    # TODO:
+    # Test if this is PPI::Statement::Variable node
+    # - SL
+
     my (@symbols, @values);
 
     if ( @symbols = $node->symbols ) {
