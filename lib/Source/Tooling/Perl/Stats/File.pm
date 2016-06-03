@@ -32,24 +32,37 @@ sub new ($class, @args) {
     my $doc = PPI::Document->new( @args )
         or die 'Unable to parse (' . (join ', ' => @args) . ')';
 
-    my (@packages, @subs, @vars);
+    my ($current, @packages, @subs, @vars);
     $doc->find(
         sub ($root, $node) {
             if ( $node->isa('PPI::Statement::Package') ) {
-                push @packages => Source::Tooling::Perl::Stats::Package->new( $node );
+                push @packages => $current = Source::Tooling::Perl::Stats::Package->new( $node );
                 return undef; # do not recurse
             }
             elsif ( $node->isa('PPI::Statement::Sub') ) {
-                push @subs => Source::Tooling::Perl::Stats::Sub->new( $node );
+                if ( $current ) {
+                    $current->add_subs( Source::Tooling::Perl::Stats::Sub->new( $node ) );
+                }
+                else {
+                    push @subs => Source::Tooling::Perl::Stats::Sub->new( $node );
+                }
             }
             elsif ( $node->isa('PPI::Statement::Variable') && $node->type eq 'our' ) {
                 my ($symbols, $values) = extract_symbols_and_values_from_variable( $node );
 
+                my @local_vars;
                 foreach my $i ( 0 .. $symbols->$#* ) {
-                    push @vars => Source::Tooling::Perl::Stats::Var->new(
+                    push @local_vars => Source::Tooling::Perl::Stats::Var->new(
                         $symbols->[$i]->symbol,
                         ($values->[$i] ? extract_sensible_value( $values->[$i] ) : undef)
                     );
+                }
+
+                if ( $current ) {
+                    $current->add_vars( @local_vars );
+                }
+                else {
+                    push @vars => @local_vars;
                 }
             }
 

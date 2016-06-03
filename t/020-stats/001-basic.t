@@ -18,6 +18,7 @@ subtest '... basic package test' => sub {
 
     my $src = q[
         package Foo;
+        our $VERSION = 100;
 
         package Bar {
             our $VERSION = '0.01';
@@ -32,6 +33,9 @@ subtest '... basic package test' => sub {
     ];
 
     my $f = Source::Tooling::Perl::Stats::File->new( \$src );
+
+    is_deeply([], [ $f->vars ], '... no file based vars');
+    is_deeply([], [ $f->subs ], '... no file based subs');
 
     #diag $f->ppi_dump;
 
@@ -77,6 +81,32 @@ subtest '... basic package test' => sub {
         isa_ok($a, 'Source::Tooling::Perl::Stats::Var');
         is($a->symbol, '$AUTHORITY', '... got the version we expected');
         is($a->value, 'cpan:STEVAN', '... got the version we expected');
+    };
+
+    subtest '... check out version stuff with file based package scoping' => sub {
+        my $Foo = $packages[0];
+        is($Foo->name, 'Foo', '... got the expected package');
+
+        #warn Dumper $Foo;
+
+        is_deeply(
+            [qw[ $VERSION ]],
+            [ map { $_->symbol } $Foo->vars ],
+            '... got the vars we expected'
+        );
+
+
+        is_deeply(
+            [ 100 ],
+            [ map { $_->value } $Foo->vars ],
+            '... got the vars we expected'
+        );
+
+        my $v = $Foo->version;
+        isa_ok($v, 'Source::Tooling::Perl::Stats::Var');
+        is($v->symbol, '$VERSION', '... got the version we expected');
+        is($v->value, 100, '... got the version we expected');
+
     };
 
 };

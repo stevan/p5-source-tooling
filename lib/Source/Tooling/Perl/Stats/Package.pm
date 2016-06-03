@@ -93,6 +93,9 @@ sub ppi  ($self) { $self->{_package}  }
 sub subs ($self) { $self->{_subs}->@* }
 sub vars ($self) { $self->{_vars}->@* }
 
+sub add_subs ($self, @subs) { push $self->{_subs}->@* => @subs }
+sub add_vars ($self, @vars) { push $self->{_vars}->@* => @vars }
+
 # methods
 
 sub name ($self) {
