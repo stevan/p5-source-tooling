@@ -4,31 +4,26 @@ use v5.22;
 use warnings;
 use experimental 'signatures';
 
-use Scalar::Util ();
-
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
 
-use parent 'Source::Tooling::Perl::Stats';
-
-sub new ($class, $var) {
-
-    (Scalar::Util::blessed( $var ) && $var->isa('PPI::Token::Symbol'))
-        || die 'You must pass a valid `PPI::Token::Symbol` instance';
-
+sub new ($class, $symbol, $value) {
     return bless {
-        _var => $var,
+        _symbol => $symbol,
+        _value  => $value,
     } => $class;
 }
 
 # accessors
 
-sub ppi ($self) { $self->{_var} }
+sub symbol ($self) { $self->{_symbol} }
+sub value  ($self) { $self->{_value}  }
 
 # methods
 
-sub name ($self) { $self->ppi->symbol }
+sub starts_with ($self, $substr) { index( $self->symbol, $substr ) == 0 }
+sub contains    ($self, $substr) { index( $self->symbol, $substr ) >= 0 }
 
 1;
 

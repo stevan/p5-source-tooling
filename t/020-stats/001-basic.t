@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use Data::Dumper;
+
 use Test::More;
 
 BEGIN {
@@ -17,7 +19,9 @@ subtest '... basic package test' => sub {
     my $src = q[
         package Foo;
 
-        package Bar {};
+        package Bar {
+            our $VERSION = '0.01';
+        };
 
         package Foo::Bar {
 
@@ -28,6 +32,8 @@ subtest '... basic package test' => sub {
 
     my $f = Source::Tooling::Perl::Stats::File->new( \$src );
 
+    #diag $f->ppi_dump;
+
     is_deeply(
         [qw[ Foo Bar Foo::Bar ]],
         [ map { $_->name } $f->packages ],
@@ -35,7 +41,7 @@ subtest '... basic package test' => sub {
     );
 
     is_deeply(
-        [ 1, 1, 3 ],
+        [ 1, 3, 3 ],
         [ map { $_->line_count } $f->packages ],
         '... got the package line counts we expected'
     );
@@ -96,45 +102,53 @@ subtest '... basic sub test' => sub {
 subtest '... basic variable test' => sub {
 
     my $src = q[
+            our $TEST;
+            our ($TEST1, @TEST2);
             our $FOO = 10;
             our ($BAR, @BAZ) = (20, 30);
+            our $GORCH = $TEST;
             package Foo {
                 our $BAR = 20;
-                $Foo::BAZ = 30; # not a declaration
+                $Foo::BAZ = 30; # implicit declaration
+                $main::FOO = 20;
             }
         1;
     ];
 
     my $f = Source::Tooling::Perl::Stats::File->new( \$src );
 
+    #diag $f->ppi_dump;
+
+    #warn Dumper([ map $_->symbol, $f->vars ]);
+
     is_deeply(
-        [qw[ $FOO $BAR @BAZ ]],
-        [ map { $_->name } $f->vars ],
+        [qw[ $TEST $TEST1 @TEST2 $FOO $BAR @BAZ $GORCH ]],
+        [ map { $_->symbol } $f->vars ],
         '... got the vars we expected'
     );
 
     is_deeply(
-        [ 1, 1, 1 ],
-        [ map { $_->line_count } $f->vars ],
-        '... got the sub line counts we expected'
+        [ undef, undef, undef, '10', '20', '30', '$TEST' ],
+        [ map { $_->value } $f->vars ],
+        '... got the var values we expected'
     );
 
     subtest '... test the Foo package' => sub {
         my ($Foo) = $f->packages;
 
         is($Foo->name, 'Foo', '... got the expected name');
-        is($Foo->line_count, 5, '... got the expected line count');
+        is($Foo->line_count, 6, '... got the expected line count');
 
         is_deeply(
-            [qw[ $BAR ]],
-            [ map { $_->name } $Foo->vars ],
+            [qw[ $BAR $Foo::BAZ ]],
+            [ map { $_->symbol } $Foo->vars ],
             '... got the vars we expected'
         );
 
         is_deeply(
-            [ 1 ],
-            [ map { $_->line_count } $Foo->vars ],
-            '... got the var line counts we expected'
+            [ '20', '30' ],
+            [ map { $_->value } $Foo->vars ],
+            '... got the var values we expected'
         );
     };
 

@@ -10,9 +10,13 @@ use experimental qw[
 use PPI;
 use PPI::Document;
 
+use Data::Dumper ();
+
 use Source::Tooling::Perl::Stats::Package;
 use Source::Tooling::Perl::Stats::Sub;
 use Source::Tooling::Perl::Stats::Var;
+
+use Importer 'Source::Tooling::Util::PPI' => qw[ extract_symbols_and_values_from_variable ];
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -30,18 +34,23 @@ sub new ($class, @args) {
         sub ($root, $node) {
             if ( $node->isa('PPI::Statement::Package') ) {
                 push @packages => Source::Tooling::Perl::Stats::Package->new( $node );
-                return undef; # do not descend (let the package object do that)
+                return undef; # do not recurse
             }
             elsif ( $node->isa('PPI::Statement::Sub') ) {
                 push @subs => Source::Tooling::Perl::Stats::Sub->new( $node );
-                return undef; # do not descend (packages and subs cannot be nested here)
             }
             elsif ( $node->isa('PPI::Statement::Variable') && $node->type eq 'our' ) {
-                foreach my $symbol ( $node->symbols ) {
-                    push @vars => Source::Tooling::Perl::Stats::Var->new( $symbol );
+                my ($symbols, $values) = extract_symbols_and_values_from_variable( $node );
+
+                foreach my $i ( 0 .. $symbols->$#* ) {
+                    push @vars => Source::Tooling::Perl::Stats::Var->new(
+                        $symbols->[$i]->symbol,
+                        ($values->[$i] ? $values->[$i]->content : undef)
+                    );
                 }
-                return undef; # do not descend (duh)
             }
+
+            return 0; # do not descend, but keep matching (duh)
         }
     );
 
