@@ -14,13 +14,21 @@ use parent 'Source::Tooling::Perl::Stats';
 
 sub new ($class, $var) {
 
-    (Scalar::Util::blessed( $var ) && $var->isa('PPI::Statement::Sub'))
-        || die 'You must pass a valid `PPI::Statement::Sub` instance';
+    (Scalar::Util::blessed( $var ) && $var->isa('PPI::Token::Symbol'))
+        || die 'You must pass a valid `PPI::Token::Symbol` instance';
 
     return bless {
         _var => $var,
     } => $class;
 }
+
+# accessors
+
+sub ppi ($self) { $self->{_var} }
+
+# methods
+
+sub name ($self) { $self->ppi->symbol }
 
 1;
 

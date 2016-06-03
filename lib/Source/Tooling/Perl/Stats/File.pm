@@ -25,7 +25,7 @@ sub new ($class, @args) {
     my $doc = PPI::Document->new( @args )
         or die 'Unable to parse (' . (join ', ' => @args) . ')';
 
-    my (@packages, @subs);
+    my (@packages, @subs, @vars);
     $doc->find(
         sub ($root, $node) {
             if ( $node->isa('PPI::Statement::Package') ) {
@@ -36,6 +36,12 @@ sub new ($class, @args) {
                 push @subs => Source::Tooling::Perl::Stats::Sub->new( $node );
                 return undef; # do not descend (packages and subs cannot be nested here)
             }
+            elsif ( $node->isa('PPI::Statement::Variable') && $node->type eq 'our' ) {
+                foreach my $symbol ( $node->symbols ) {
+                    push @vars => Source::Tooling::Perl::Stats::Var->new( $symbol );
+                }
+                return undef; # do not descend (duh)
+            }
         }
     );
 
@@ -43,12 +49,16 @@ sub new ($class, @args) {
         _document => $doc,
         _packages => \@packages,
         _subs     => \@subs,
+        _vars     => \@vars,
     } => $class;
 }
+
+# accessors
 
 sub ppi      ($self) { $self->{_document}     }
 sub packages ($self) { $self->{_packages}->@* }
 sub subs     ($self) { $self->{_subs}->@*     }
+sub vars     ($self) { $self->{_vars}->@*     }
 
 1;
 

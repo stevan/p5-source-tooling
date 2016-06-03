@@ -90,4 +90,52 @@ subtest '... basic sub test' => sub {
     };
 };
 
+subtest '... basic variable test' => sub {
+
+    my $src = q[
+            our $FOO = 10;
+            our ($BAR, @BAZ) = (20, 30);
+            package Foo {
+                our $BAR = 20;
+                $Foo::BAZ = 30; # not a declaration
+            }
+        1;
+    ];
+
+    my $f = Source::Tooling::Perl::Stats::File->new( \$src );
+
+    is_deeply(
+        [qw[ $FOO $BAR @BAZ ]],
+        [ map { $_->name } $f->vars ],
+        '... got the vars we expected'
+    );
+
+    is_deeply(
+        [ 1, 1, 1 ],
+        [ map { $_->line_count } $f->vars ],
+        '... got the sub line counts we expected'
+    );
+
+    subtest '... test the Foo package' => sub {
+        my ($Foo) = $f->packages;
+
+        is($Foo->name, 'Foo', '... got the expected name');
+        is($Foo->line_count, 5, '... got the expected line count');
+
+        is_deeply(
+            [qw[ $BAR ]],
+            [ map { $_->name } $Foo->vars ],
+            '... got the vars we expected'
+        );
+
+        is_deeply(
+            [ 1 ],
+            [ map { $_->line_count } $Foo->vars ],
+            '... got the var line counts we expected'
+        );
+    };
+
+};
+
+
 done_testing;

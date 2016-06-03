@@ -23,12 +23,18 @@ sub new ($class, $pkg) {
     (Scalar::Util::blessed( $pkg ) && $pkg->isa('PPI::Statement::Package'))
         || die 'You must pass a valid `PPI::Statement::Package` instance';
 
-    my (@subs);
+    my (@subs, @vars);
     $pkg->find(
         sub ($root, $node) {
             if ( $node->isa('PPI::Statement::Sub') ) {
                 push @subs => Source::Tooling::Perl::Stats::Sub->new( $node );
                 return undef; # do not descend (packages and subs cannot be nested here)
+            }
+            elsif ( $node->isa('PPI::Statement::Variable') && $node->type eq 'our' ) {
+                foreach my $symbol ( $node->symbols ) {
+                    push @vars => Source::Tooling::Perl::Stats::Var->new( $symbol );
+                }
+                return undef; # do not descend (duh)
             }
         }
     );
@@ -36,11 +42,17 @@ sub new ($class, $pkg) {
     return bless {
         _package => $pkg,
         _subs    => \@subs,
+        _vars    => \@vars,
     } => $class;
 }
 
-sub ppi      ($self) { $self->{_package}  }
-sub subs     ($self) { $self->{_subs}->@* }
+# accessors
+
+sub ppi  ($self) { $self->{_package}  }
+sub subs ($self) { $self->{_subs}->@* }
+sub vars ($self) { $self->{_vars}->@* }
+
+# methods
 
 sub name ($self) {
     $self->ppi->namespace
