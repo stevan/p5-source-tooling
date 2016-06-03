@@ -41,10 +41,17 @@ subtest '... basic package test' => sub {
     );
 
     is_deeply(
+        [ undef, q['0.01'], undef ],
+        [ map { $_->version ? $_->version->value : undef } $f->packages ],
+        '... got the package version we expected'
+    );
+
+    is_deeply(
         [ 1, 3, 3 ],
         [ map { $_->line_count } $f->packages ],
         '... got the package line counts we expected'
     );
+
 };
 
 subtest '... basic sub test' => sub {

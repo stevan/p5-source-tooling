@@ -94,7 +94,7 @@ sub name ($self) {
 
 sub version ($self) {
     foreach my $var ( $self->vars ) {
-        return $var if $var->name_contains('VERSION');
+        return $var if $var->symbol_contains('VERSION');
     }
     return;
 }

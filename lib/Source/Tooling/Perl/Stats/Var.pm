@@ -22,8 +22,8 @@ sub value  ($self) { $self->{_value}  }
 
 # methods
 
-sub starts_with ($self, $substr) { index( $self->symbol, $substr ) == 0 }
-sub contains    ($self, $substr) { index( $self->symbol, $substr ) >= 0 }
+sub symbol_starts_with ($self, $substr) { index( $self->symbol, $substr ) == 0 }
+sub symbol_contains    ($self, $substr) { index( $self->symbol, $substr ) >= 0 }
 
 1;
 
