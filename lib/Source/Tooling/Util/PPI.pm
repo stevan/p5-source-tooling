@@ -6,19 +6,24 @@ use experimental 'signatures';
 
 use PPI;
 
+use Scalar::Util ();
+
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
 our $DEBUG     = 0;
 
 our @EXPORT_OK = qw[
     &extract_symbols_and_values_from_variable
-    &extract_sensible_value
+    &extract_symbol_and_value_from_statement
+    &extract_sensible_value_from_token
 ];
 
-sub extract_sensible_value ($node) {
+sub extract_sensible_value_from_token ($node) {
+
+    (Scalar::Util::blessed( $node ) && $node->isa('PPI::Token'))
+        || die 'You must pass a valid `PPI::Token` instance';
 
     my $value;
-
     if ( $node->isa('PPI::Token::Quote') ) {
         if ( $node->can('literal') ) {
             $value = $node->literal;
@@ -34,15 +39,35 @@ sub extract_sensible_value ($node) {
     } else {
         $value = $node->content;
     }
-
     return $value;
+}
+
+sub extract_symbol_and_value_from_statement ($node) {
+
+    (Scalar::Util::blessed( $node ) && $node->isa('PPI::Statement'))
+        || die 'You must pass a valid `PPI::Statement` instance';
+
+    my $symbol = $node->schild(0);
+
+    # ignore this statement unless ...
+    return unless Scalar::Util::blessed($symbol)        # we find something
+               && $symbol->isa('PPI::Token::Symbol')    # and it is a symbol
+               && index( $symbol->content, '::' ) >= 0; # and it has :: in it
+
+    my $op = $symbol->snext_sibling;
+
+    # ignore this statement unless ...
+    return unless Scalar::Util::blessed($op)        # we find something
+               && $op->isa('PPI::Token::Operator')  # and it is an operator
+               && $op->content eq '=';              # and it is assignment
+
+    return $symbol, $op->snext_sibling;
 }
 
 sub extract_symbols_and_values_from_variable ($node) {
 
-    # TODO:
-    # Test if this is PPI::Statement::Variable node
-    # - SL
+    (Scalar::Util::blessed( $node ) && $node->isa('PPI::Statement::Variable'))
+        || die 'You must pass a valid `PPI::Statement::Variable` instance';
 
     my (@symbols, @values);
 
