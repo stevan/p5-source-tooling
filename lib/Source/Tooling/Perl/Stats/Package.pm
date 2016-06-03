@@ -33,7 +33,6 @@ sub new ($class, $pkg) {
         sub ($root, $node) {
             if ( $node->isa('PPI::Statement::Sub') ) {
                 push @subs => Source::Tooling::Perl::Stats::Sub->new( $node );
-                return undef; # do not descend (packages and subs cannot be nested here)
             }
             elsif ( $node->isa('PPI::Statement::Variable') && $node->type eq 'our' ) {
                 my ($symbols, $values) = extract_symbols_and_values_from_variable( $node );
@@ -104,7 +103,8 @@ sub version ($self) {
     foreach my $var ( $self->vars ) {
         return $var if $var->symbol_contains('VERSION');
     }
-    return;
+    return undef;
+}
 }
 
 1;
