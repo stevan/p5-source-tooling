@@ -13,6 +13,7 @@ use Module::CoreList ();
 use Module::Runtime  ();
 
 use Source::Tooling::Perl::MetaCPAN;
+use Source::Tooling::Perl::Stats::File;
 
 our $VERSION   = '0.01';
 our $AUTHORITY = 'cpan:STEVAN';
@@ -60,105 +61,23 @@ sub classify_modules ($self, @modules) {
 ## PPI related stuff
 
 sub extract_module_info ($self, $source) {
+    my $f = Source::Tooling::Perl::Stats::File->new( $source->stringify );
 
-    my $doc = PPI::Document->new( $source->stringify );
+    my @modules;
+    foreach my $pkg ( $f->packages ) {
 
-    (defined $doc)
-        || die 'Could not load document: ' . $source->stringify;
+        #use Data::Dumper;
+        #die Dumper $pkg;
+        #warn Dumper [ $pkg->version, $pkg->authority ];
 
-    # TODO:
-    # This whole method is in desperate need of a re-write.
-    # It was copy/pasted togehter from a couple of sources
-    # and I never really took the time to understand it. I
-    # am now convinced that it is the wrong approach, but
-    # until I write an actual test suite, I won't be sure.
-    # - SL
-
-    my sub find_variable ($current, $node, $var_name) {
-        # Must be a quote or number
-        $node->isa('PPI::Token::Quote')          or
-        $node->isa('PPI::Token::Number')         or return;
-
-        # To the right is a statement terminator or nothing
-        my $t = $node->snext_sibling;
-        if ( $t ) {
-            $t->isa('PPI::Token::Structure') or return;
-            $t->content eq ';'               or return;
-        }
-
-        # To the left is an equals sign
-        my $eq = $node->sprevious_sibling        or return;
-        $eq->isa('PPI::Token::Operator')         or return;
-        $eq->content eq '='                      or return;
-
-        # To the left is a $var_name symbol (VERSION, AUTHORITY, etc)
-        my $v = $eq->sprevious_sibling           or return;
-        $v->isa('PPI::Token::Symbol')            or return;
-        $v->content =~ m/^\$(?:\w+::)*${var_name}$/  or return;
-
-        # To the left is either nothing or "our"
-        my $o = $v->sprevious_sibling;
-        if ( $o ) {
-            $o->content eq 'our'             or return;
-            $o->sprevious_sibling           and return;
-        }
-
-        warn "Found possible $var_name in '$current->{namespace}' in '$source'" if $DEBUG;
-
-        my $value;
-        if ( $node->isa('PPI::Token::Quote') ) {
-            if ( $node->can('literal') ) {
-                $value = $node->literal;
-            } else {
-                $value = $node->string;
-            }
-        } elsif ( $node->isa('PPI::Token::Number') ) {
-            if ( $node->can('literal') ) {
-                $value = $node->literal;
-            } else {
-                $value = $node->content;
-            }
-        } else {
-            die 'Unsupported object ' . ref($node);
-        }
-
-        warn "Found version '$value' in '$current->{namespace}' in '$source'" if $DEBUG;
-
-        return $value;
+        push @modules => {
+            namespace => $pkg->name,
+            line_num  => $pkg->line_number,
+            path      => $source->stringify,
+            VERSION   => ($pkg->version   ? $pkg->version->value   : undef),
+            AUTHORITY => ($pkg->authority ? $pkg->authority->value : undef),
+        };
     }
-
-    my ($current, @modules);
-    $doc->find(sub {
-        my ($root, $node) = @_;
-
-        # if we have a current namespace, descend to find version ...
-        if ( $current ) {
-
-            $modules[-1]->{VERSION}   ||= find_variable( $current, $node, 'VERSION' );
-            $modules[-1]->{AUTHORITY} ||= find_variable( $current, $node, 'AUTHORITY' );
-
-            return '' unless $modules[-1]->{VERSION} && $modules[-1]->{AUTHORITY};
-
-            undef $current;
-        }
-        else {
-            # otherwise wait for next package ...
-            return 0 unless $node->isa('PPI::Statement::Package');
-            $current = {
-                namespace => $node->namespace,
-                line_num  => $node->line_number,
-                path      => $source->stringify,
-                VERSION   => undef,
-                AUTHORITY => undef,
-            };
-
-            push @modules => $current;
-
-            warn "Found package '$current->{namespace}' in '$source'" if $DEBUG;
-        }
-
-        return;
-    });
 
     return \@modules;
 }
