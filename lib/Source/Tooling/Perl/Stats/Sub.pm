@@ -22,7 +22,11 @@ sub new ($class, $sub) {
     } => $class;
 }
 
-sub ppi { $_[0]->{_sub} }
+# accessors
+
+sub ppi ($self) { $self->{_sub} }
+
+# methods
 
 sub name ($self) {
     $self->ppi->name

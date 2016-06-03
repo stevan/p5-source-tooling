@@ -17,9 +17,11 @@ subtest '... basic package test' => sub {
     my $src = q[
         package Foo;
 
-        package Bar;
+        package Bar {};
 
-        package Foo::Bar;
+        package Foo::Bar {
+
+        };
 
         1;
     ];
@@ -33,7 +35,7 @@ subtest '... basic package test' => sub {
     );
 
     is_deeply(
-        [ 1, 1, 1 ],
+        [ 1, 1, 3 ],
         [ map { $_->line_count } $f->packages ],
         '... got the package line counts we expected'
     );
@@ -48,6 +50,7 @@ subtest '... basic sub test' => sub {
                 $x += 2;
                 return $x;
             }
+            sub baz;
             package Foo {
                 sub baz {
                     $_[0]->{wtf}
@@ -59,13 +62,13 @@ subtest '... basic sub test' => sub {
     my $f = Source::Tooling::Perl::Stats::File->new( \$src );
 
     is_deeply(
-        [qw[ foo bar ]],
+        [qw[ foo bar baz ]],
         [ map { $_->name } $f->subs ],
         '... got the subs we expected'
     );
 
     is_deeply(
-        [ 1, 5 ],
+        [ 1, 5, 1 ],
         [ map { $_->line_count } $f->subs ],
         '... got the sub line counts we expected'
     );
