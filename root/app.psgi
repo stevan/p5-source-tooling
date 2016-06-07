@@ -97,10 +97,48 @@ builder {
         return [ 400, [], [ 'The path specified is a directory (' . $path->stringify . ")\n" ]]
             if -d $path;
 
+        my $file = Path::Class::File->new( $path );
+
+        my ($status, @headers, @body);
+
+        if ( my $header = $r->headers->header('Range') ) {
+            if ($header =~ /^lines\=(\d+)\-(\d+)$/) {
+                my ($start, $end) = ($1, $2);
+
+                return [ 416, [], [ 'End of range must be greater than start of range' ]]
+                    if $start >= $end;
+
+                my @all  = $file->slurp;
+                my $size = scalar @all;
+
+                return [ 416, [], [ 'Start of range exceeds content length' ]]
+                    if $start >= $size;
+
+                # correct the end of the range
+                $end = $size if $end > $size;
+
+                $status  = 206;
+                @body    = @all[ $start .. $end ];
+                @headers = ('Content-Range' => "lines ${start}-${end}/${size}");
+            }
+            else {
+                return [ 400, [], [ 'Unsupported range type:' . $header ]];
+            }
+        }
+        else {
+            warn "No range header";
+            $status = 200;
+            @body   = $file->slurp;
+        }
+
         return [
             200,
-            [ 'Content-Type' => 'text/plain' ],
-            [ Path::Class::File->new( $path )->slurp ]
+            [
+                'Content-Type'  => 'text/plain',
+                'Accept-Ranges' => 'lines',
+                @headers,
+            ],
+            \@body
         ];
     };
 
