@@ -61,7 +61,7 @@ sub extract_symbol_and_value_from_statement ($node) {
                && $op->isa('PPI::Token::Operator')  # and it is an operator
                && $op->content eq '=';              # and it is assignment
 
-    return $symbol, $op->snext_sibling;
+    return ($symbol, $op->snext_sibling);
 }
 
 sub extract_symbols_and_values_from_variable ($node) {
@@ -127,7 +127,7 @@ sub extract_symbols_and_values_from_variable ($node) {
         }
     }
 
-    return \@symbols, \@values;
+    return (\@symbols, \@values);
 }
 
 1;
