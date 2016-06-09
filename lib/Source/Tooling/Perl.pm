@@ -70,6 +70,7 @@ sub critique ($self, $path, $query) {
     my $statistics = $critic->statistics;
 
     return {
+        path       => $path->stringify,
         statistics => {
             modules    => $statistics->modules,
             subs       => $statistics->subs,
