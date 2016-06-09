@@ -86,12 +86,17 @@ sub read ($env) {
             @body    = @all[ $start .. $end ];
             @headers = ('Content-Range' => "lines ${start}-${end}/${size}");
         }
-        else {
-            return [ 400, [], [ 'Unsupported range type:' . $header ]];
-        }
     }
-    else {
-        warn "No range header";
+
+    unless ( $status ) {
+        # NOTE:
+        # If we don't have a status, this means
+        # that we either:
+        # 1) didn't get a valid Range header
+        # 2) it contained a range unit we didn't understand
+        #     http://httpwg.org/specs/rfc7233.html
+        #     `An origin server MUST ignore a Range header field that
+        #     contains a range unit it does not understand.`
         $status = 200;
         @body   = $file->slurp;
     }
