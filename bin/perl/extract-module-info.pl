@@ -63,6 +63,9 @@ sub main {
     traverse_filesystem(
         $ROOT,
         sub ($source, $acc) {
+            # skip non-perl files
+            return unless $source->basename =~ /\.[pm|pl|t]$/;
+
             my $f = Source::Tooling::Perl::Stats::File->new( $source->stringify );
             push @$acc => {
                 source   => $source->stringify,
