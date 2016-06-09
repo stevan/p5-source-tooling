@@ -39,7 +39,7 @@ sub perldoc ($env) {
     my $r    = Plack::Request->new( $env );
     my $name = substr $r->path, 1;
     my $args = $r->query_parameters;
-    my $func_name = !$args->{f};
+    my $func_name = $args->{f};
 
     my @cmd  = ($env->{'source.tooling.env.PERLDOC_BIN'}, '-o', 'HTML');
     if($name){
