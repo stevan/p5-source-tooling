@@ -41,7 +41,7 @@ sub perldoc ($env) {
     my $args = $r->query_parameters;
     my $func_name = !$args->{f};
 
-    my @cmd  = ($ENV{PERLDOC_BIN}, '-o', 'HTML');
+    my @cmd  = ($env->{'source.tooling.env.PERLDOC_BIN'}, '-o', 'HTML');
     if($name){
         push @cmd, $name;
     }
