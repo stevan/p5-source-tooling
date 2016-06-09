@@ -58,30 +58,6 @@ sub classify_modules ($self, @modules) {
     ];
 }
 
-## PPI related stuff
-
-sub extract_module_info ($self, $source) {
-    my $f = Source::Tooling::Perl::Stats::File->new( $source->stringify );
-
-    my @modules;
-    foreach my $pkg ( $f->packages ) {
-
-        #use Data::Dumper;
-        #die Dumper $pkg;
-        #warn Dumper [ $pkg->version, $pkg->authority ];
-
-        push @modules => {
-            namespace => $pkg->name,
-            line_num  => $pkg->line_number,
-            path      => $source->stringify,
-            VERSION   => ($pkg->version   ? $pkg->version->value   : undef),
-            AUTHORITY => ($pkg->authority ? $pkg->authority->value : undef),
-        };
-    }
-
-    return \@modules;
-}
-
 # Perl::Critic oriented stuff
 
 sub critique ($self, $path, $query) {

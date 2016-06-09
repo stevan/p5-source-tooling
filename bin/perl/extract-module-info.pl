@@ -14,7 +14,7 @@ use Path::Class  ();
 use Getopt::Long ();
 use Data::Dumper ();
 
-use Source::Tooling::Perl;
+use Source::Tooling::Perl::Stats::File;
 
 use Importer 'Source::Tooling::Util::JSON'       => qw[ encode ];
 use Importer 'Source::Tooling::Util::FileSystem' => qw[ traverse_filesystem ];
@@ -42,21 +42,43 @@ sub main {
     (defined $include && defined $exclude)
         && die 'You can not have both include and exclude patterns';
 
-    my $perl = Source::Tooling::Perl->new;
-
     # The data structure within @modules is
     # as follows:
     # {
-    #     namespace : String,    # name of the package
-    #     line_num  : Int,       # line number package began at
-    #     path      : Str,       # path of the file package was in
-    #     version   : VString    # value of $VERSION
+    #     source   => Path, # this is the path to a given file
+    #     packages => [
+    #         {
+    #             line_num  => Int,       # line at which the package defintion starts
+    #             name      => Str,       # name of the package
+    #             meta      => {
+    #                 version   => Version,   # version of the given package
+    #                 authority => Authority, # authority of the given package
+    #             }
+    #         },
+    #         ...
+    #     ]
     # }
 
     my @modules;
     traverse_filesystem(
         $ROOT,
-        sub ($source, $acc) { push @$acc => $perl->extract_module_info( $source )->@* },
+        sub ($source, $acc) {
+            my $f = Source::Tooling::Perl::Stats::File->new( $source->stringify );
+            push @$acc => {
+                source   => $source->stringify,
+                packages => [
+                    map +{
+                        line_num => $_->line_number,
+                        name     => $_->name,
+                        meta     => {
+                            version   => ($_->version   ? $_->version->value   : undef),
+                            authority => ($_->authority ? $_->authority->value : undef),
+                        }
+                    }, $f->packages
+                ]
+            };
+            return;
+        },
         \@modules,
         (
             ($exclude ? (exclude => $exclude) : ()),
