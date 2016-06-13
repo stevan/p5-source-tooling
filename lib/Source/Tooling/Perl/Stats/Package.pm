@@ -102,6 +102,29 @@ sub authority ($self) {
     return undef;
 }
 
+# export
+
+sub export ($self) {
+    foreach my $var ( $self->vars ) {
+        return $var if $var->symbol_contains('EXPORT');
+    }
+    return undef;
+}
+
+sub export_ok ($self) {
+    foreach my $var ( $self->vars ) {
+        return $var if $var->symbol_contains('EXPORT_OK');
+    }
+    return undef;
+}
+
+sub export_tag ($self) {
+    foreach my $var ( $self->vars ) {
+        return $var if $var->symbol_contains('EXPORT_TAGS');
+    }
+    return undef;
+}
+
 1;
 
 __END__

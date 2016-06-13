@@ -20,7 +20,6 @@ sub source      ($self) { $self->ppi->content }
 sub line_count  ($self) { scalar split /\n/ => $self->source }
 sub line_number ($self) { $self->ppi->line_number }
 
-
 1;
 
 __END__
