@@ -66,7 +66,7 @@ builder {
                 400, [], [
                     'Unsupported git command (',
                     $_[0]->{PATH_INFO},
-                    ') supported commands include ( /git/show/:sha, /git/log/:path, /git/blame/:path )'
+                    ') supported commands include ( /git/show/:sha, /git/log/:path, /git/blame/:path, /git/grep/:pattern )'
                 ]
             ];
         };
