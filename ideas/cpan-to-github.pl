@@ -20,6 +20,11 @@ Query the github API till we find a candidate:
         https://api.github.com/search/users?q=%C3%A6var
         https://api.github.com/users/avar
 
+Additional possibly intersting stuff:
+
+https://github.com/blog/2201-making-open-source-data-more-available
+https://medium.com/google-cloud/analyzing-go-code-with-bigquery-485c70c3b451#.7c33a5i32
+
 =cut
 
 1;
