@@ -9,6 +9,8 @@ https://code.visualstudio.com/docs/tools/samples
 
 https://github.com/Microsoft/monaco-editor/tree/master
 
+https://github.com/Microsoft/language-server-protocol
+
 https://code.visualstudio.com/docs/extensions/example-language-server
 
 https://code.visualstudio.com/blogs/2016/06/27/common-language-protocol
